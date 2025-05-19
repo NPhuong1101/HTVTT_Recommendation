@@ -15,6 +15,7 @@ csv_path = os.path.join(current_dir, "../public/data/Info-trip.csv")
 try:
     data = pd.read_csv(csv_path, encoding="utf-8")
     data.rename(columns={
+        "id": "id",
         "Tên địa điểm": "title",
         "Mô tả": "description",
         "Thể loại": "category",
@@ -71,6 +72,6 @@ sim_scores = list(enumerate(total_sim))
 sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[:5]
 
 recommended = data.iloc[[i[0] for i in sim_scores]]
-result = recommended[["title", "description", "category", "location", "image", "map_link"]].to_dict(orient="records")
+result = recommended[["id", "title", "description", "category", "location", "image", "map_link"]].to_dict(orient="records")
 
 print(json.dumps(result, ensure_ascii=False))
