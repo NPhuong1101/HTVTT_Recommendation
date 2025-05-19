@@ -1,6 +1,6 @@
 :root {
-  --primary-color: #6366f1;
-  --primary-dark: #4f46e5;
+  --primary-color: #10b981;     
+  --primary-dark: #059669;        
   --text-color: #1f2937;
   --bg-color: #f3f4f6;
   --white: #ffffff;
@@ -9,6 +9,7 @@
   --font: 'Segoe UI', sans-serif;
   --transition: all 0.25s ease-in-out;
 }
+
 
 * {
   box-sizing: border-box;
@@ -27,7 +28,7 @@ html, body, #root {
 }
 
 .auth-bg {
-  background-image: url('Images/beach.jpg');
+  background-image: url('src/assets/beach.jpg');
   background-size: cover;
   background-position: center;
   height: 100vh;
@@ -53,6 +54,7 @@ html, body, #root {
   height: 100vh;
   width: 100vw;           
   padding: 0;
+  background-color: transparent;
 }
 
 .auth-form {
@@ -159,8 +161,8 @@ html, body, #root {
 
 .eye-icon {
   position: absolute;
-  top: 70%;
-  right: 14px;         
+  top: 69%;
+  right: 12px;         
   transform: translateY(-50%);
   font-size: 20px;
   color: #8b8b8b;
@@ -171,4 +173,29 @@ html, body, #root {
   align-items: center;
   justify-content: center;
   pointer-events: auto;
+}
+
+.password-field {
+  position: relative;
+}
+
+.toggle-auth {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--text-light);
+}
+
+.toggle-auth span {
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.toggle-auth span:hover {
+  color: var(--primary-dark);
+  background-color: rgba(16, 185, 129, 0.1); 
 }

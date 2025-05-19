@@ -45,59 +45,63 @@ const Destination = () => {
                 <div className="info-suggestion-wrapper">
                     <div className="destination-info">
                         <div className="destination-card">
-                            <img
-                                src={`https://drive.google.com/thumbnail?id=${place["ID Ảnh URL địa điểm"]}`}
-                                alt={place["Tên địa điểm"]}
-                                className="destination-image"
-                                onError={(e) => {
-                                    e.target.onerror = null;
-                                    e.target.src = '/default-image.jpg';
-                                }}
+                            <iframe
+                                src={`https://drive.google.com/file/d/${place["ID Ảnh URL địa điểm"]}/preview`}
+                                title={place["Tên địa điểm"]}
+                                className="destination-frame"
+                                allow="autoplay"
                             />
-                            <h1>{place["Tên địa điểm"]}</h1>
-                            <p><strong>Tỉnh thành:</strong> {place["Tỉnh thành"]}</p>
-                            <p><strong>Mô tả:</strong> {place["Mô tả"]}</p>
-                            <div className="map-container">
-                                {place["Link google map"] && (
-                                    <iframe
-                                        src={place["Link google map"].replace('view', 'embed')}
-                                        width="600"
-                                        height="450"
-                                        style={{ border: 0 }}
-                                        allowFullScreen
-                                        loading="lazy"
-                                        referrerPolicy="no-referrer-when-downgrade"
-                                    ></iframe>
-                                )}
+
+                            <div className="destination-card two-column-layout">
+                                {/* Cột bên trái: Thông tin địa điểm */}
+                                <div className="left-column">
+                                    <h1>{place["Tên địa điểm"]}</h1>
+                                    <p><strong>Tỉnh thành:</strong> {place["Tỉnh thành"]}</p>
+                                    <p><strong>Mô tả:</strong> {place["Mô tả"]}</p>
+                                    <div className="map-container">
+                                    {place["Link google map"] ? (
+                                        <a
+                                        href={place["Link google map"]}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        >
+                                        Xem bản đồ trên Google Maps
+                                        </a>
+                                    ) : (
+                                        <p>Không có link bản đồ hợp lệ.</p>
+                                    )}
+                                    </div>
+                                </div>
+
+                                {/* Cột bên phải: Gợi ý */}
+                                <div className="right-column suggestions-container">
+                                    <h2>Gợi ý điểm đến cho bạn</h2>
+                                    {suggestions.length === 0 ? (
+                                    <p>Không có gợi ý phù hợp.</p>
+                                    ) : (
+                                    suggestions.map((suggestion, index) => (
+                                        <div className="suggestion-card" key={index}>
+                                        <img
+                                            src={`https://drive.google.com/thumbnail?id=${suggestion.image}`}
+                                            alt={suggestion.title}
+                                            onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = '/default-image.jpg';
+                                            }}
+                                        />
+                                        <div className="info">
+                                            <h3>{suggestion.title}</h3>
+                                            <p><strong>{suggestion.category}</strong></p>
+                                            <p>{suggestion.description}</p>
+                                        </div>
+                                        <div className="rating">⭐ 4.5</div>
+                                        <button className="save-button">Save</button>
+                                        </div>
+                                    ))
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
-
-                    <div className="suggestions-container">
-                        <h2>Gợi ý điểm đến cho bạn</h2>
-                        {suggestions.length === 0 ? (
-                            <p>Không có gợi ý phù hợp.</p>
-                        ) : (
-                            suggestions.map((suggestion, index) => (
-                                <div className="suggestion-card" key={index}>
-                                    <img
-                                        src={`https://drive.google.com/thumbnail?id=${suggestion.image}`}
-                                        alt={suggestion.title}
-                                        onError={(e) => {
-                                            e.target.onerror = null;
-                                            e.target.src = defaultImage;
-                                        }}
-                                    />
-                                    <div className="info">
-                                        <h3>{suggestion.title}</h3>
-                                        <p><strong>{suggestion.category}</strong></p>
-                                        <p>{suggestion.description}</p>
-                                    </div>
-                                    <div className="rating">⭐ 4.5</div>
-                                    <button className="save-button">Save</button>
-                                </div>
-                            ))
-                        )}
                     </div>
                 </div>
             </div>

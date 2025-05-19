@@ -1,155 +1,282 @@
+/* ===== Modern Destination Page Styles ===== */
+:root {
+  --primary: #2A6B3A;
+  --primary-light: #E8F3EA;
+  --secondary: #FF9A44;
+  --dark: #2D2D2D;
+  --light: #F8F8F8;
+  --white: #FFFFFF;
+  --gray: #6D6D6D;
+  --light-gray: #E0E0E0;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* ===== Base Container ===== */
 .destination-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  max-width: 2000px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', Arial, sans-serif;
 }
 
-.destination-card {
-    overflow: hidden;
-    transition: transform 0.2s;
-}
-
-.destination-image {
-    width: 100%;
-    height: 75vh;
-}
-
+/* ===== Main Layout ===== */
 .info-suggestion-wrapper {
-    display: flex;
-    justify-content: space-between;
-    gap: 15px;
-    width: 90%;
-    margin: 50px auto;
-    flex-wrap: wrap;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  margin-top: 0px;
 }
 
-.destination-info {
-    width: 60%;
-    padding-right: 20px;
-    border-right: 2px solid #ccc;
+.two-column-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  align-items: start;
 }
 
-.suggestions-container {
-    width: 35%;
-    border-radius: 20px;
-    padding: 10px;
+@media (max-width: 992px) {
+  .two-column-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
-.suggestions-container h2 {
-    text-align: center;
-    color: #457d58;
-    font-size: 2rem;
+/* ===== Destination Card ===== */
+.destination-card {
+  background: var(--white);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
 }
 
-.suggestion-card {
-    display: flex;
-    align-items: center;
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 10px;
-    margin-bottom: 1px;
-    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.1);
+.destination-frame {
+  width: 100%;
+  height: 500px;
+  border: none;
+  border-radius: 0px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  object-fit: cover;
+  overflow: hidden;
 }
 
-.suggestion-card:hover {
-    transform: scale(1.02);
-    background: #cbddd1;
+/* ===== Left Column - Destination Info ===== */
+.left-column {
+  background: var(--white);
+  padding: 30px;
 }
 
-.suggestion-card img {
-    width: 130px;
-    height: 100px;
-    border-radius: 8px;
-    object-fit: cover;
-    margin-right: 15px;
+.left-column h1 {
+  font-size: 2.4rem;
+  color: var(--primary);
+  margin: 0 0 20px 0;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
-.suggestion-card .info {
-    flex: 1;
+.left-column p {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: var(--dark);
+  margin-bottom: 15px;
 }
 
-.suggestion-card h3 {
-    margin: 0;
-    font-size: 16px;
-    color: #2d5d36;
-}
-
-.suggestion-card p {
-    margin: 5px 0;
-    font-size: 14px;
-    color: #555;
-}
-
-.suggestion-card .rating {
-    font-size: 14px;
-    color: #2d5d36;
-    font-weight: bold;
-}
-
-.save-button {
-    background-color: #2d5d36;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s ease;
-}
-
-.save-button:hover {
-    background-color: #1f4425;
-}
-
-h1 {
-    font-size: 2.5em;
-    margin: 0 0;
-}
-
-p {
-    margin: 0 15px 10px 15px; 
-}
-
-.rating {
-    color: #FF6347; 
-    margin: 10px 20px;
-}
-
-.activities, .user-reviews {
-    margin: 10px;
-}
-
-.activities ul {
-    list-style-type: none;
-    padding: 0;
-}
-
-.review {
-    border-top: 1px solid #eee;
-    padding: 10px 0;
+.left-column strong {
+  color: var(--primary);
+  font-weight: 600;
 }
 
 .map-container {
-    display: flex;
-    justify-content: center; 
-    margin: 20px 0;
-}
-  
-.map-link {
-    color: blue;
-    cursor: pointer;
-    text-decoration: underline;
+  margin: 30px 0 0 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--light-gray);
 }
 
-.destination-container {
-    padding: 20px;
-    max-width: 800px;
-    margin: auto;
+.map-container a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+  transition: var(--transition);
+  padding: 10px 15px;
+  border-radius: 6px;
+}
+
+.map-container a:hover {
+  background-color: var(--primary-light);
+  text-decoration: underline;
+}
+
+/* ===== Right Column - Suggestions ===== */
+.right-column {
+  position: sticky;
+  top: 20px;
+}
+
+.suggestions-container {
+  background: var(--white);
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+}
+
+.suggestions-container h2 {
+  font-size: 1.8rem;
+  color: var(--primary);
+  margin: 0 0 25px 0;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--primary-light);
+}
+
+/* ===== Suggestion Cards ===== */
+.suggestion-card {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 15px;
+  padding: 15px;
+  margin-bottom: 10px !important;
+  background: var(--white);
+  border-radius: 10px;
+  border: 1px solid var(--light-gray);
+  transition: var(--transition);
+}
+
+.suggestion-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-sm);
+  border-color: var(--primary);
+}
+
+.suggestion-card img {
+  width: 100%;
+  height: 500px;
+  object-fit: contain;
+  border-radius: 8px;
+  align-self: center;
+  image-rendering: auto;
+  background-color: var(--light);
+}
+
+.suggestion-card .info {
+  display: flex;
+  flex-direction: column;
+}
+
+.suggestion-card h3 {
+  font-size: 1.15rem;
+  color: var(--dark);
+  margin: 0 0 5px 0;
+  font-weight: 600;
+}
+
+.suggestion-card p {
+  font-size: 0.95rem;
+  color: var(--gray);
+  margin: 3px 0;
+  line-height: 1.5;
+}
+
+.suggestion-card .rating {
+  color: var(--secondary);
+  font-weight: 700;
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.suggestion-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.save-button {
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.save-button:hover {
+  background: #1E4D2A;
+  transform: scale(1.05);
+}
+
+/* ===== Error Message ===== */
+.error-message {
+  text-align: center;
+  padding: 40px;
+  color: #d32f2f;
+  font-size: 1.2rem;
+  background: #FFEBEE;
+  border-radius: 8px;
+  margin: 20px;
+}
+
+/* ===== Responsive Design ===== */
+@media (max-width: 768px) {
+  .destination-container {
+    padding: 0 15px;
   }
   
-  .suggestion-item {
-    border: 1px solid #ccc;
-    border-radius: 12px;
-    padding: 15px;
-    margin: 10px 0;
-    background-color: #f9f9f9;
+  .destination-image {
+    height: 350px;
   }
+  
+  .left-column, .suggestions-container {
+    padding: 20px;
+  }
+  
+  .left-column h1 {
+    font-size: 2rem;
+  }
+  
+  .suggestions-container h2 {
+    font-size: 1.5rem;
+  }
+  
+  .suggestion-card {
+    grid-template-columns: 80px 1fr;
+    gap: 12px;
+    padding: 12px;
+  }
+  
+  .suggestion-card img {
+    height: 70px;
+  }
+}
+
+@media (max-width: 480px) {
+  .destination-image {
+    height: 250px;
+  }
+  
+  .left-column h1 {
+    font-size: 1.8rem;
+  }
+  
+  .suggestion-card {
+    grid-template-columns: 1fr;
+  }
+  
+  .suggestion-card img {
+    width: 100%;
+    height: 120px;
+  }
+  
+  .map-container a {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+}

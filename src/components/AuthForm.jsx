@@ -1,33 +1,34 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import '../styles/AuthForm.css';
 
 const AuthForm = () => {
-  const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [signupStep, setSignupStep] = useState(1);
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: ''
   });
+
   const [travelHistory, setTravelHistory] = useState([]);
   const [searchInput, setSearchInput] = useState('');
   const [searchResults, setSearchResults] = useState([]);
 
   const handleSearchPlaces = async (query) => {
-    if (query.length < 2) {
-      setSearchResults([]);
-      return;
-    }
-
+    if (query.length < 2) return setSearchResults([]);
     try {
-      const response = await axios.get(`/api/search-places?query=${query}`);
-      setSearchResults(response.data);
-    } catch (error) {
-      console.error("Error searching places:", error);
+      const res = await axios.get(`/api/search-places?query=${query}`);
+      setSearchResults(res.data);
+    } catch (err) {
+      console.error('Search error:', err);
     }
   };
 
@@ -45,7 +46,7 @@ const AuthForm = () => {
   };
 
   const handleRemovePlace = (id) => {
-    setTravelHistory(travelHistory.filter(item => item.id !== id));
+    setTravelHistory(travelHistory.filter(place => place.id !== id));
   };
 
   const handleSubmit = async (e) => {
@@ -53,17 +54,16 @@ const AuthForm = () => {
 
     if (isLogin) {
       try {
-        const response = await axios.post('/api/login', {
+        const res = await axios.post('/api/login', {
           email: formData.email,
           password: formData.password
         });
-
-        if (response.data.success) {
-          localStorage.setItem('user', JSON.stringify(response.data.user));
+        if (res.data.success) {
+          localStorage.setItem('user', JSON.stringify(res.data.user));
           navigate('/');
         }
-      } catch (error) {
-        console.error("Login error:", error);
+      } catch (err) {
+        console.error('Login failed:', err);
       }
     } else {
       if (signupStep === 1) {
@@ -82,14 +82,13 @@ const AuthForm = () => {
         }
 
         try {
-          const response = await axios.post('/api/register', {
+          const res = await axios.post('/api/register', {
             ...formData,
             travelHistory
           });
-
-          localStorage.setItem('user', JSON.stringify(response.data));
+          localStorage.setItem('user', JSON.stringify(res.data));
           navigate('/profile');
-        } catch (error) {
+        } catch (err) {
           alert('Đăng ký thất bại. Vui lòng thử lại.');
         }
       }
@@ -97,6 +96,7 @@ const AuthForm = () => {
   };
 
   return (
+    <div className="auth-bg">
     <div className="auth-container">
       <div className="auth-form">
         <h2>{isLogin ? 'Đăng nhập' : (signupStep === 1 ? 'Đăng ký' : 'Sở thích du lịch')}</h2>
@@ -124,26 +124,32 @@ const AuthForm = () => {
                 />
               </div>
 
-              <div className="form-group">
+              <div className="form-group password-field">
                 <label>Mật khẩu</label>
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
                   minLength="6"
                 />
+                <span onClick={() => setShowPassword(!showPassword)} className="eye-icon">
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </span>
               </div>
 
-              <div className="form-group">
+              <div className="form-group password-field">
                 <label>Xác nhận mật khẩu</label>
                 <input
-                  type="password"
+                  type={showConfirmPassword ? 'text' : 'password'}
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   required
                   minLength="6"
                 />
+                <span onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="eye-icon">
+                  {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                </span>
               </div>
             </>
           )}
@@ -165,10 +171,7 @@ const AuthForm = () => {
                 {searchResults.length > 0 && (
                   <ul className="search-results">
                     {searchResults.map(place => (
-                      <li
-                        key={place.id}
-                        onClick={() => handleAddTravelPlace(place)}
-                      >
+                      <li key={place.id} onClick={() => handleAddTravelPlace(place)}>
                         {place.name} - {place.location}
                       </li>
                     ))}
@@ -186,7 +189,7 @@ const AuthForm = () => {
                       <li key={place.id}>
                         <div><strong>{place.name}</strong></div>
                         <div className="date-inputs">
-                          <label>Từ: </label>
+                          <label>Từ:</label>
                           <input
                             type="date"
                             value={place.startDate}
@@ -197,7 +200,7 @@ const AuthForm = () => {
                             }}
                             required
                           />
-                          <label>Đến: </label>
+                          <label>Đến:</label>
                           <input
                             type="date"
                             value={place.endDate}
@@ -230,14 +233,17 @@ const AuthForm = () => {
                 />
               </div>
 
-              <div className="form-group">
+              <div className="form-group password-field">
                 <label>Mật khẩu</label>
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
                 />
+                <span onClick={() => setShowPassword(!showPassword)} className="eye-icon">
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </span>
               </div>
             </>
           )}
@@ -257,6 +263,7 @@ const AuthForm = () => {
           </p>
         </form>
       </div>
+    </div>
     </div>
   );
 };
