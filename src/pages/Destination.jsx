@@ -45,19 +45,12 @@ const Destination = () => {
                 <div className="info-suggestion-wrapper">
                     <div className="destination-info">
                         <div className="destination-card">
-                            <div className="destination-frame">
-                                <img
-                                    src={`https://drive.google.com/thumbnail?id=${place["ID Ảnh URL địa điểm"]}`}
-                                    alt={place["Tên địa điểm"]}
-                                    className="destination-image"
-                                    loading="lazy" // Tải ảnh lazy
-                                    decoding="async" // Giải mã ảnh không đồng bộ
-                                    onError={(e) => {
-                                        e.target.onerror = null;
-                                        e.target.src = '/default-image.jpg';
-                                    }}
-                                />
-                            </div>
+                            <iframe
+                                src={`https://drive.google.com/file/d/${place["ID Ảnh URL địa điểm"]}/preview`}
+                                title={place["Tên địa điểm"]}
+                                className="destination-frame"
+                                allow="autoplay"
+                            />
 
                             <div className="destination-card two-column-layout">
                                 {/* Cột bên trái: Thông tin địa điểm */}
