@@ -4,6 +4,8 @@ import axios from 'axios';
 import '../styles/UserProfile.css';
 import PlaceCard from '../components/PlaceCard';
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const UserProfile = () => {
   const navigate = useNavigate();
@@ -11,10 +13,11 @@ const UserProfile = () => {
   const [travelHistory, setTravelHistory] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
   const [isAddingPlace, setIsAddingPlace] = useState(false);
-  
-  const [searchResults, setSearchResults] = useState([]);
 
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchInput, setSearchInput] = useState('');
   const [user, setUser] = useState(null);
+  const [selectedPlaces, setSelectedPlaces] = useState([]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -70,227 +73,274 @@ const UserProfile = () => {
   };
 
   const handleAddPlace = async () => {
-    if (!newPlace.placeId || !newPlace.startDate || !newPlace.endDate) return;
-    
+    const validPlaces = selectedPlaces.filter(p => p.placeId && p.startDate && p.endDate);
+    if (validPlaces.length === 0) return;
+
     try {
-      // Lấy thông tin địa điểm từ searchResults
-      const selectedPlace = searchResults.find(p => p.id === newPlace.placeId);
-      
-      const updatedHistory = [
-        ...travelHistory,
-        {
-          id: Date.now().toString(),
+      const updatedHistory = [...travelHistory];
+
+      for (const place of validPlaces) {
+        updatedHistory.push({
+          id: Date.now().toString() + Math.random(), // đảm bảo duy nhất
           userId: user.id,
-          placeId: newPlace.placeId,
-          placeName: newPlace.placeName,
-          category: selectedPlace?.category || '',
-          startDate: newPlace.startDate,
-          endDate: newPlace.endDate,
+          placeId: place.placeId,
+          placeName: place.placeName,
+          category: place.category || '',
+          startDate: place.startDate,
+          endDate: place.endDate,
           created_at: new Date().toISOString()
-        }
-      ];
-      
+        });
+
+        await axios.post('/api/save-travel-history', {
+          userId: user.id,
+          placeId: place.placeId,
+          startDate: place.startDate,
+          endDate: place.endDate
+        });
+      }
+
       setTravelHistory(updatedHistory);
-      
-      // Lưu vào CSV
-      await axios.post('/api/save-travel-history', {
-        userId: user.id,
-        placeId: newPlace.placeId,
-        startDate: newPlace.startDate,
-        endDate: newPlace.endDate,
-      });
-      
-      // Reset form
-      setNewPlace({ 
-        placeId: '', 
-        placeName: '', 
-        startDate: '', 
-        endDate: '',
-      });
-      setSearchResults([]);
-      setSearchInput('');
+      setSelectedPlaces([]); // Reset
       setIsAddingPlace(false);
     } catch (error) {
-      console.error("Error adding place:", error);
+      console.error("Error adding places:", error);
     }
   };
 
-  const handleDeletePlace = async (placeId) => {
+  const handleDeletePlace = async (id) => {
     try {
-      // Xóa khỏi state
-      const updatedHistory = travelHistory.filter(item => item.id !== placeId);
-      setTravelHistory(updatedHistory);
-      
-      // Cập nhật CSV
-      await axios.delete(`/api/travel-history/${placeId}`);
-    } catch (error) {
-      console.error("Error deleting place:", error);
+      const res = await fetch(`/api/delete-user-place/${id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert("Đã xóa địa điểm!");
+        // Cập nhật lại state để xóa khỏi giao diện
+        setTravelHistory(prev => prev.filter(item => item.id !== id));
+      } else {
+        alert(data.error || "Xóa thất bại!");
+      }
+    } catch (err) {
+      console.error("Lỗi khi xóa:", err);
+      alert("Lỗi kết nối khi xóa!");
     }
   };
 
   const handlePlaceSelect = (place) => {
-    setNewPlace({
-      ...newPlace,
-      placeId: place.id,
-      placeName: place.name,
-      category: place.category // Thêm thể loại vào state
-    });
-    setSearchResults([]); // Xóa kết quả tìm kiếm
-    setSearchInput(''); // Xóa input tìm kiếm
+    if (selectedPlaces.some(p => p.placeId === place.id)) return; // Không thêm trùng
+
+    setSelectedPlaces(prev => [
+      ...prev,
+      {
+        placeId: place.id,
+        placeName: place.name,
+        category: place.category,
+        location: place.location,
+        startDate: '',
+        endDate: ''
+      }
+    ]);
+    setSearchResults([]);
+    setSearchInput('');
   };
 
-  // Thêm state cho searchInput
-  const [searchInput, setSearchInput] = useState('');
 
   return !user ? (
     <div>Đang tải hồ sơ người dùng...</div>
   ) : (
-    <div className="user-profile-container">
-      <div className="profile-header">
-        <div className="profile-info">
-          <img src={user.avatar} alt="User Avatar" className="profile-avatar" />
-          <div>
-            <h2>{user.name}</h2>
-            <p>{user.email}</p>
-          </div>
-        </div>
-        <button 
-          className="add-place-btn"
-          onClick={() => setIsAddingPlace(!isAddingPlace)}
-        >
-          <FaPlus /> Thêm địa điểm
-        </button>
-      </div>
-
-      {isAddingPlace && (
-        <div className="add-place-form">
-          <h3>Thêm địa điểm đã đến</h3>
-          
-          <div className="form-group">
-            <label>Tìm địa điểm</label>
-            <div className="search-input-wrapper">
-              <input
-              type="text"
-              placeholder="Nhập tên địa điểm..."
-              value={searchInput}
-              onChange={(e) => {
-                setSearchInput(e.target.value);
-                handleSearchPlace(e.target.value);
-              }}
-            />
-              {searchResults.length > 0 && (
-                <ul className="search-results">
-                  {searchResults.map(place => (
-                    <li 
-                      key={place.id}
-                      onClick={() => setNewPlace({
-                        ...newPlace,
-                        placeId: place.id,
-                        placeName: place.name
-                      })}
-                    >
-                      <img 
-                        src={`https://drive.google.com/thumbnail?id=${place.image}`} 
-                        alt={place.name}
-                      />
-                      <div className="place-info">
-                        <h4>{place.name}</h4>
-                        <p>{place.location}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
+    <>
+      <Navbar />
+      <div className="user-profile-container">
+        <div className="profile-header">
+          <div className="profile-info">
+            <img src={user.avatar} alt="User Avatar" className="profile-avatar" />
+            <div>
+              <h2>{user.name}</h2>
+              <p>{user.email}</p>
             </div>
           </div>
-          
-          <div className="form-row">
+          <button 
+            className="add-place-btn"
+            onClick={() => setIsAddingPlace(!isAddingPlace)}
+          >
+            <FaPlus /> Thêm địa điểm
+          </button>
+        </div>
+
+        {isAddingPlace && (
+          <div className="add-place-form">
+            <h3>Thêm địa điểm đã đến</h3>
+            {selectedPlaces.length > 0 && (
+              <div className="selected-place">
+                <strong>Địa điểm đã chọn:</strong> {selectedPlaces.length} địa điểm
+              </div>
+            )}
             <div className="form-group">
-              <label>Ngày bắt đầu</label>
-              <input
-                type="date"
-                value={newPlace.startDate}
-                onChange={(e) => setNewPlace({...newPlace, startDate: e.target.value})}
-                required
+              <label>Tìm địa điểm</label>
+              <div className="search-input-wrapper">
+                <input
+                type="text"
+                placeholder="Nhập tên địa điểm..."
+                value={searchInput}
+                onChange={(e) => {
+                  setSearchInput(e.target.value);
+                  handleSearchPlace(e.target.value);
+                }}
               />
+                {searchResults.length > 0 && (
+                  <ul className="search-results">
+                    {searchResults.map(place => (
+                      <li 
+                        key={place.id}
+                        onClick={() => handlePlaceSelect(place)}
+                      >
+                        <img 
+                          src={`https://drive.google.com/thumbnail?id=${place.image}`} 
+                          alt={place.name}
+                        />
+                        <div className="place-info">
+                          <h4>{place.name}</h4>
+                          <p>{place.location}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
             
-            <div className="form-group">
-              <label>Ngày kết thúc</label>
-              <input
-                type="date"
-                value={newPlace.endDate}
-                onChange={(e) => setNewPlace({...newPlace, endDate: e.target.value})}
-                required
-              />
-            </div>
-          </div>
-          
-          <div className="form-actions">
-            <button 
-              type="button" 
-              className="cancel-btn"
-              onClick={() => setIsAddingPlace(false)}
-            >
-              Hủy
-            </button>
-            <button 
-              type="button" 
-              className="submit-btn"
-              onClick={handleAddPlace}
-            >
-              Lưu
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="travel-history-section">
-        <h2>Lịch sử du lịch</h2>
-        {travelHistory.length === 0 ? (
-          <p>Bạn chưa thêm địa điểm nào.</p>
-        ) : (
-          <div className="timeline">
-            {travelHistory.map(item => (
-              <div key={item.id} className="timeline-item">
-                <div className="timeline-date">
-                  {item.startDate} - {item.endDate}
-                </div>
-                <div className="timeline-content">
-                  <div className="place-header">
-                    <h3>{item.placeName}</h3>
-                    <span className="category-badge">{item.category}</span>
+            {selectedPlaces.map((place, index) => (
+              <div key={place.placeId} className="form-row selected-place-block">
+                <div className="form-group full-width">
+                  <label>Thông tin địa điểm đã chọn</label>
+                  <div className="selected-place-info">
+                    <p><strong>Tên:</strong> {place.placeName}</p>
+                    <p><strong>Vị trí:</strong> {place.location}</p>
+                    <p><strong>Thể loại:</strong> {place.category || 'Không rõ'}</p>
                   </div>
-                  <button 
-                    className="delete-btn"
-                    onClick={() => handleDeletePlace(item.id)}
-                  >
-                    <FaTrash />
-                  </button>
                 </div>
+
+                <div className="form-group">
+                  <label>Ngày bắt đầu</label>
+                  <input
+                    type="date"
+                    value={place.startDate}
+                    onChange={(e) => {
+                      const newPlaces = [...selectedPlaces];
+                      newPlaces[index].startDate = e.target.value;
+                      setSelectedPlaces(newPlaces);
+                    }}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Ngày kết thúc</label>
+                  <input
+                    type="date"
+                    value={place.endDate}
+                    onChange={(e) => {
+                      const newPlaces = [...selectedPlaces];
+                      newPlaces[index].endDate = e.target.value;
+                      setSelectedPlaces(newPlaces);
+                    }}
+                    required
+                  />
+                </div>
+                
+                <button 
+                  className="delete-btn small"
+                  onClick={() => {
+                    const updatedPlaces = selectedPlaces.filter((_, i) => i !== index);
+                    setSelectedPlaces(updatedPlaces);
+                  }}
+                >
+                  <FaTrash /> Xóa
+                </button>
+
               </div>
             ))}
+            
+            <div className="form-actions">
+              <button 
+                type="button" 
+                className="cancel-btn"
+                onClick={() => setIsAddingPlace(false)}
+              >
+                Hủy
+              </button>
+              <button 
+                type="button" 
+                className="submit-btn"
+                onClick={handleAddPlace}
+              >
+                Lưu
+              </button>
+            </div>
           </div>
         )}
-      </div>
 
-      <div className="recommendations-section">
-        <h2>Gợi ý cho bạn</h2>
-        {recommendations.length === 0 ? (
-          <p>Thêm nhiều địa điểm hơn để nhận gợi ý phù hợp.</p>
-        ) : (
-          <div className="recommendations-grid">
-            {recommendations.map(place => (
-              <PlaceCard 
-                key={place.id} 
-                place={place}
-                onClick={() => navigate(`/destination/${place.id}`)}
-              />
-            ))}
-          </div>
-        )}
+        <div className="travel-history-section">
+          <h2>Lịch sử du lịch</h2>
+          {travelHistory.length === 0 ? (
+            <p>Bạn chưa thêm địa điểm nào.</p>
+          ) : (
+            <div className="timeline">
+              {travelHistory.map(item => (
+                <div key={item.id} className="timeline-item">
+                  <div className="timeline-date">
+                    {item.startDate} - {item.endDate}
+                  </div>
+                  <div className="timeline-content">
+                    <div className="place-header">
+                      <div className="image-container">
+                        <img
+                          src={`https://drive.google.com/thumbnail?id=${item.placeImg}`}
+                          alt={item.placeName}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/default-image.jpg';
+                          }}
+                        />
+                      </div>
+                      <h3>{item.placeName}</h3>
+                      <p>{item.location}</p>
+                      <span className="category-badge">{item.category}</span>
+                    </div>
+                    <button 
+                      className="delete-btn"
+                      onClick={() => handleDeletePlace(item.id)}
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="recommendations-section">
+          <h2>Gợi ý cho bạn</h2>
+          {recommendations.length === 0 ? (
+            <p>Thêm nhiều địa điểm hơn để nhận gợi ý phù hợp.</p>
+          ) : (
+            <div className="recommendations-grid">
+              {recommendations.map(place => (
+                <PlaceCard 
+                  key={place.id} 
+                  place={place}
+                  onClick={() => navigate(`/destination/${place.id}`)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+      <Footer />
+    </>
   );
 };
 

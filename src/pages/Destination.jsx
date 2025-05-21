@@ -21,7 +21,7 @@ const Destination = () => {
                 
                 // Lấy gợi ý
                 const suggestionsResponse = await axios.post('/api/suggest', {
-                    id: placeResponse.data["id"]  // ← dùng ID thay vì title
+                    id: placeResponse.data["id"]
                 });
 
                 setSuggestions(suggestionsResponse.data);
@@ -86,7 +86,7 @@ const Destination = () => {
                                         <div
                                             className="suggestion-card"
                                             key={index}
-                                            onClick={() => navigate(`/destination/${suggestion.id}`)} // ← điều hướng khi click
+                                            onClick={() => navigate(`/destination/${suggestion.id}`)}
                                             style={{ cursor: 'pointer' }} // tùy chọn: trỏ chuột dạng "bàn tay"
                                         >
                                             <img
@@ -99,7 +99,8 @@ const Destination = () => {
                                             />
                                             <div className="info">
                                             <h3>{suggestion.title}</h3>
-                                            <p><strong>{suggestion.category}</strong></p>
+                                            <p><strong>{suggestion.location}</strong></p>
+                                            <p>{suggestion.category}</p>
                                             </div>
                                             <button
                                             className="save-button"

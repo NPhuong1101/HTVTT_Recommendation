@@ -10,13 +10,29 @@ import uuid
 from datetime import datetime
 import traceback
 import subprocess
+import requests
 
 # Đường dẫn đến file CSV
-USERS_CSV = 'data/users.csv'
-TRAVEL_HISTORY_CSV = 'data/user_travel_history.csv'
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+DATA_DIR = os.path.join(BASE_DIR, '../public/data')
+USERS_CSV = os.path.join(DATA_DIR, 'users.csv')
+TRAVEL_HISTORY_CSV = os.path.join(DATA_DIR, 'user_travel_history.csv')
+INFO_TRIP_CSV = os.path.join(DATA_DIR, 'Info-trip.csv')
 
 app = Flask(__name__)
 CORS(app)  # Bật CORS cho tất cả routes
+
+@app.route('/api/proxy/<path:subpath>', methods=['POST', 'GET'])
+def proxy(subpath):
+    url = f"https://extensions.aitopia.ai/{subpath}"
+    headers = {'Content-Type': 'application/json'}
+
+    if request.method == 'POST':
+        res = requests.post(url, headers=headers, json=request.get_json())
+    else:
+        res = requests.get(url, headers=headers, params=request.args)
+
+    return (res.content, res.status_code, res.headers.items())
 
 # Route cho trang chủ
 @app.route('/')
@@ -29,6 +45,7 @@ def home():
     </ul>
     """
 
+# Gợi ý địa điểm du lịch trong Destination (gửi 1 id địa điểm vào contentbase.py)
 @app.route('/api/suggest', methods=['POST'])
 def suggest():
     data = request.get_json()
@@ -56,6 +73,7 @@ def suggest():
 def get_csv():
     return send_from_directory('../public/data', 'Info-trip.csv')
 
+# Đăng kí
 @app.route('/api/register', methods=['POST'])
 def register():
     data = request.json
@@ -65,6 +83,7 @@ def register():
         return jsonify({"error": "Email là bắt buộc"}), 400
 
     users_csv_path = os.path.join(os.path.dirname(__file__), '../public/data/users.csv')
+    print(f"[DEBUG] Path to users.csv: {users_csv_path}")
 
     # 🔍 Kiểm tra email đã tồn tại chưa
     if os.path.exists(users_csv_path):
@@ -125,6 +144,7 @@ def save_travel_history():
     
     return jsonify({"success": True})
 
+# Tìm kiếm địa điểm
 @app.route('/api/search-places', methods=['GET'])
 def search_places():
     query = request.args.get('query', '').lower()
@@ -164,6 +184,7 @@ def get_places():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# Lấy thông tin địa điểm dựa trên id
 @app.route('/api/place/<id>', methods=['GET'])
 def get_place(id):
     try:
@@ -198,6 +219,7 @@ def get_place(id):
         print(f"[DEBUG] ❌ Lỗi khi lấy địa điểm: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+# Lấy thông tin địa điểm nổi tiếng trong PopularDestinations.csv
 @app.route('/api/popular-destinations', methods=['GET'])
 def get_popular_destinations():
     try:
@@ -231,6 +253,7 @@ def get_popular_destinations():
             "details": str(e)
         }), 500
 
+# Đăng nhập
 @app.route('/api/login', methods=['POST'])
 def login():
     try:
@@ -267,23 +290,66 @@ def login():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
+# Lấy thông tin địa điểm du lịch trong UserProfile
 @app.route('/api/user-history/<user_id>', methods=['GET'])
 def get_user_history(user_id):
     try:
-        path = os.path.join(os.path.dirname(__file__), '../public/data/user_travel_history.csv')
-        if not os.path.exists(path):
+        # Đường dẫn tới file lịch sử
+        history_path = os.path.join(os.path.dirname(__file__), '../public/data/user_travel_history.csv')
+        # Đường dẫn tới file địa điểm
+        places_path = os.path.join(os.path.dirname(__file__), '../public/data/Info-trip.csv')
+
+        if not os.path.exists(history_path) or not os.path.exists(places_path):
             return jsonify([])
 
-        with open(path, 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            history = [
-                row for row in reader
-                if row.get('user_id') == user_id
-            ]
+        # Load danh sách địa điểm thành dict: place_id -> place_info
+        place_map = {}
+        with open(places_path, 'r', encoding='utf-8') as f_places:
+            reader = csv.DictReader(f_places)
+            for row in reader:
+                place_map[row['id']] = row
+
+        # Load lịch sử người dùng
+        with open(history_path, 'r', encoding='utf-8') as f_history:
+            reader = csv.DictReader(f_history)
+            history = []
+            for row in reader:
+                if row.get('user_id') == user_id:
+                    place_id = row.get('place_id')
+                    place_info = place_map.get(place_id, {})
+                    
+                    history.append({
+                        'id': row.get('id'),
+                        'user_id': user_id,
+                        'place_id': place_id,
+                        'startDate': row.get('startDate'),
+                        'endDate': row.get('endDate'),
+                        'created_at': row.get('created_at'),
+                        'placeImg': place_info.get('ID Ảnh URL địa điểm', ''),
+                        'placeName': place_info.get('Tên địa điểm', ''),
+                        'location': place_info.get('Tỉnh thành', ''),
+                        'category': place_info.get('Thể loại', '')
+                    })
+        # DEBUG: In log để kiểm tra
+        print(">>> Số dòng lịch sử tìm được:", len(history))
+
+        # Optional: Nếu cần lọc thêm từ pandas
+        df_user = pd.read_csv(TRAVEL_HISTORY_CSV)
+        df_info = pd.read_csv(INFO_TRIP_CSV)
+
+        df_user_places = df_user[df_user["user_id"] == user_id]
+        print("Các place_id user đã đi:", df_user_places["place_id"].tolist())
+
+        df_filtered_info = df_info[df_info["id"].isin(df_user_places["place_id"])]
+        print("Các địa điểm info-trip khớp:", df_filtered_info[["id", "Tên địa điểm"]].to_dict(orient='records'))
+
         return jsonify(history)
+
     except Exception as e:
+        print("Lỗi:", str(e))  # Thêm dòng này
         return jsonify({"error": str(e)}), 500
 
+# Gợi ý trong UserProfile
 @app.route('/api/suggest/user', methods=['POST'])
 def suggestUser():
     data = request.get_json()
@@ -328,6 +394,38 @@ def suggestUser():
     except Exception as e:
         print(f"❌ [ERROR] Failed suggesting for user {user_id}: {e}", file=sys.stderr)
         return jsonify([])
+
+# Xóa địa điểm đã du lịch trong UserProfile
+@app.route('/api/delete-user-place/<history_id>', methods=['DELETE'])
+def delete_user_place(history_id):
+    try:
+        history_path = os.path.join(os.path.dirname(__file__), '../public/data/user_travel_history.csv')
+
+        if not os.path.exists(history_path):
+            return jsonify({"error": "Lịch sử không tồn tại"}), 404
+
+        # Đọc toàn bộ dữ liệu từ file
+        with open(history_path, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            rows = list(reader)
+            fieldnames = reader.fieldnames
+
+        # Lọc bỏ dòng có id trùng với history_id
+        new_rows = [row for row in rows if row['id'] != history_id]
+
+        # Ghi lại file nếu có thay đổi
+        if len(new_rows) < len(rows):
+            with open(history_path, 'w', encoding='utf-8', newline='') as f:
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(new_rows)
+            return jsonify({"success": True, "message": "Xóa địa điểm thành công"}), 200
+        else:
+            return jsonify({"error": "Không tìm thấy địa điểm với ID đã cho"}), 404
+
+    except Exception as e:
+        print("Lỗi:", str(e))
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000)
