@@ -19,6 +19,14 @@ const UserProfile = () => {
   const [user, setUser] = useState(null);
   const [selectedPlaces, setSelectedPlaces] = useState([]);
 
+  function isOverlapping(start1, end1, start2, end2) {
+    const s1 = new Date(start1);
+    const e1 = new Date(end1);
+    const s2 = new Date(start2);
+    const e2 = new Date(end2);
+    return s1 <= e2 && s2 <= e1;
+  }
+
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (!storedUser) {
@@ -76,12 +84,32 @@ const UserProfile = () => {
     const validPlaces = selectedPlaces.filter(p => p.placeId && p.startDate && p.endDate);
     if (validPlaces.length === 0) return;
 
+    // 1. Kiểm tra trùng lặp trong selectedPlaces
+    for (let i = 0; i < validPlaces.length; i++) {
+      for (let j = i + 1; j < validPlaces.length; j++) {
+        if (isOverlapping(validPlaces[i].startDate, validPlaces[i].endDate, validPlaces[j].startDate, validPlaces[j].endDate)) {
+          alert(`Khoảng thời gian của địa điểm "${validPlaces[i].placeName}" bị trùng với "${validPlaces[j].placeName}".`);
+          return;
+        }
+      }
+    }
+
+    // 2. Kiểm tra trùng lặp với travelHistory đã lưu
+    for (const newPlace of validPlaces) {
+      for (const existing of travelHistory) {
+        if (isOverlapping(newPlace.startDate, newPlace.endDate, existing.startDate, existing.endDate)) {
+          alert(`Địa điểm "${newPlace.placeName}" có khoảng thời gian trùng với "${existing.placeName}" từ ${existing.startDate} đến ${existing.endDate}.`);
+          return;
+        }
+      }
+    }
+
     try {
       const updatedHistory = [...travelHistory];
 
       for (const place of validPlaces) {
         updatedHistory.push({
-          id: Date.now().toString() + Math.random(), // đảm bảo duy nhất
+          id: Date.now().toString() + Math.random(),
           userId: user.id,
           placeId: place.placeId,
           placeName: place.placeName,
@@ -100,7 +128,7 @@ const UserProfile = () => {
       }
 
       setTravelHistory(updatedHistory);
-      setSelectedPlaces([]); // Reset
+      setSelectedPlaces([]);
       setIsAddingPlace(false);
     } catch (error) {
       console.error("Error adding places:", error);
@@ -146,6 +174,21 @@ const UserProfile = () => {
     setSearchInput('');
   };
 
+  const loadUserHistory = async () => {
+    try {
+      const historyResponse = await axios.get(`/api/user-history/${parsedUser.id}`);
+      const historyData = historyResponse.data.map(item => ({
+        ...item,
+        startDate: new Date(item.startDate),
+        endDate: new Date(item.endDate)
+      }));
+
+      setTravelHistory(historyData);
+      fetchRecommendations(historyData);
+    } catch (error) {
+      console.error("Error loading travel history:", error);
+    }
+  };
 
   return !user ? (
     <div>Đang tải hồ sơ người dùng...</div>
@@ -249,7 +292,7 @@ const UserProfile = () => {
                     required
                   />
                 </div>
-                
+
                 <button 
                   className="delete-btn small"
                   onClick={() => {
