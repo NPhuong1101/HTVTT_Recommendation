@@ -40,11 +40,21 @@ const UserProfile = () => {
     const loadUserHistory = async () => {
       try {
         const historyResponse = await axios.get(`/api/user-history/${parsedUser.id}`);
-        const historyData = historyResponse.data;
+        const historyData = historyResponse.data.map(item => ({
+          id: item.id,
+          userId: item.userId,
+          placeId: item.placeId,
+          placeName: item.placeName,
+          category: item.category || 'Không rõ',
+          location: item.location || '',
+          placeImg: item.placeImg || '',
+          startDate: item.startDate,
+          endDate: item.endDate,
+          created_at: item.created_at
+        }));
 
         setTravelHistory(historyData);
-
-        fetchRecommendations(historyData);
+        fetchRecommendations(historyData, parsedUser.id);
       } catch (error) {
         console.error("Error loading travel history:", error);
       }
@@ -54,12 +64,14 @@ const UserProfile = () => {
   }, []);
 
 
-  const fetchRecommendations = async (history) => {
-    if (history.length === 0) return;
-    
+  const fetchRecommendations = async (history, userId) => {
+    if (history.length === 0 || !userId) return;
+
     try {
-      const categories = [...new Set(history.map(item => item.category))];
-      const response = await axios.post('/api/suggest', { categories });
+      const response = await axios.post('/api/suggest/user', {
+        user_id: userId
+      });
+      console.log("Gợi ý trả về:", response.data);
       setRecommendations(response.data);
     } catch (error) {
       console.error("Error fetching recommendations:", error);
@@ -174,20 +186,8 @@ const UserProfile = () => {
     setSearchInput('');
   };
 
-  const loadUserHistory = async () => {
-    try {
-      const historyResponse = await axios.get(`/api/user-history/${parsedUser.id}`);
-      const historyData = historyResponse.data.map(item => ({
-        ...item,
-        startDate: new Date(item.startDate),
-        endDate: new Date(item.endDate)
-      }));
-
-      setTravelHistory(historyData);
-      fetchRecommendations(historyData);
-    } catch (error) {
-      console.error("Error loading travel history:", error);
-    }
+  const handleRemovePlace = (placeId) => {
+    setSelectedPlaces(prev => prev.filter(place => place.placeId !== placeId));
   };
 
   return !user ? (
@@ -293,16 +293,9 @@ const UserProfile = () => {
                   />
                 </div>
 
-                <button 
-                  className="delete-btn small"
-                  onClick={() => {
-                    const updatedPlaces = selectedPlaces.filter((_, i) => i !== index);
-                    setSelectedPlaces(updatedPlaces);
-                  }}
-                >
-                  <FaTrash /> Xóa
-                </button>
-
+                <div className="form-group">
+                  <button type="button" onClick={() => handleRemovePlace(place.placeId)}>Xóa</button>
+                </div>
               </div>
             ))}
             
@@ -310,7 +303,10 @@ const UserProfile = () => {
               <button 
                 type="button" 
                 className="cancel-btn"
-                onClick={() => setIsAddingPlace(false)}
+                onClick={() => {
+                  setIsAddingPlace(false);
+                  setSelectedPlaces([]);
+                }}
               >
                 Hủy
               </button>

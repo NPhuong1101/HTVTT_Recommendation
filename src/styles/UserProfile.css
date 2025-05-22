@@ -57,15 +57,6 @@ body {
   margin-top: 0.5rem;
 }
 
-.search-results li {
-  padding: 0.5rem;
-  cursor: pointer;
-}
-
-.search-results li:hover {
-  background: #f0f0f0;
-}
-
 .timeline {
   display: flex;
   flex-direction: column;
@@ -84,17 +75,6 @@ body {
 .timeline-date {
   min-width: 100px;
   font-weight: bold;
-}
-
-.timeline-content {
-  flex: 1;
-}
-
-.delete-btn {
-  background: none;
-  border: none;
-  color: #ff4444;
-  cursor: pointer;
 }
 
 .recommendations-grid {
@@ -219,14 +199,6 @@ body {
     box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.timeline {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    position: relative;
-    padding-left: 6px;
-}
-
 .timeline::before {
     content: "";
     position: absolute;
@@ -236,12 +208,6 @@ body {
     height: 100%;
     background: #2d5d36;
     border-radius: 2px;
-}
-
-.timeline-item {
-    display: flex;
-    align-items: center;
-    gap: 25px;
 }
 
 .timeline-dot {
@@ -284,12 +250,6 @@ body {
     align-items: center;
     width: 100%;
     gap: 10px;
-}
-
-.timeline-date {
-    min-width: 90px;
-    font-weight: bold;
-    color: #333;
 }
 
 .timeline-location {
@@ -514,29 +474,6 @@ body {
   background: #3e8e41;
 }
 
-.timeline-item {
-  display: flex;
-  margin-bottom: 1.5rem;
-  position: relative;
-}
-
-.timeline-date {
-  width: 150px;
-  padding-right: 1rem;
-  text-align: right;
-  color: #666;
-  font-size: 0.9rem;
-}
-
-.timeline-content {
-  flex: 1;
-  padding: 1rem;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  position: relative;
-}
-
 .timeline-content::before {
   content: '';
   position: absolute;
@@ -613,4 +550,32 @@ body {
 
 .selected-place-info p {
   margin: 4px 0;
+}
+
+.selected-place-block {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.selected-place-block .form-group {
+  flex: 1 1 200px;
+}
+
+.selected-place-block .form-group.full-width {
+  flex: 1 1 100%;
+}
+
+.delete-btn.small {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  font-size: 0.875rem;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
