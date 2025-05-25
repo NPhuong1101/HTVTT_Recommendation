@@ -8,6 +8,8 @@
   --error-color: #ef4444;
   --font: 'Segoe UI', sans-serif;
   --transition: all 0.25s ease-in-out;
+  --secondary-text: #6b7280;
+  --text-light: #6b7280;
 }
 
 
@@ -32,6 +34,8 @@ html, body, #root {
   background-size: cover;
   background-position: center;
   height: 100vh;
+  padding: 2rem 0;
+  min-height: 100vh;
   width: 100vw;
   position: relative;
 }
@@ -80,7 +84,7 @@ html, body, #root {
 
 .auth-form h2 {
   text-align: center;
-  margin-bottom: 1.8rem;
+  margin-bottom: 1.5rem;
   font-size: 1.7rem;
   font-weight: 700;
   color: var(--text-color);
@@ -199,4 +203,257 @@ html, body, #root {
   color: var(--primary-dark);
   background-color: rgba(16, 185, 129, 0.1); 
 }
+
+/* Thêm vào file CSS */
+.travel-history-step {
+  margin-top: -1rem;
+}
+
+.search-wrapper {
+  position: relative;
+  margin-bottom: -1rem;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  border: 1px solid var(--gray-border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: var(--transition);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.search-icon {
+  position: absolute;
+  left: 20rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--secondary-text);
+}
+
+/* Phần gợi ý địa điểm */
+.popular-places-container {
+  background-color: #f8fafc;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 0.5rem;
+
+}
+
+.suggestion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.suggestion-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.show-more-btn,
+.show-less-btn {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+}
+
+.show-more-btn:hover,
+.show-less-btn:hover {
+  text-decoration: underline;
+}
+
+.suggestion-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  max-height: 250px; /* Giới hạn chiều cao phần tags */
+  overflow-y: auto;  /* Thêm thanh cuộn */
+  padding: 0.5rem 0;
+}
+
+/* Tùy chỉnh thanh cuộn */
+.suggestion-tags::-webkit-scrollbar,
+.popular-places-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.suggestion-tags::-webkit-scrollbar-thumb,
+.popular-places-container::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 3px;
+}
+
+.suggestion-tags::-webkit-scrollbar-track,
+.popular-places-container::-webkit-scrollbar-track {
+  background-color: #f1f5f9;
+}
+
+.place-tag {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border: none;
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.place-tag:hover {
+  background-color: #bae6fd;
+}
+
+/* Kết quả tìm kiếm */
+.search-results-container {
+  border: 1px solid var(--gray-border);
+  border-radius: 8px;
+  margin-top: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.result-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.result-item:hover {
+  background-color: #f8fafc;
+}
+
+.result-item .place-icon {
+  margin-right: 0.75rem;
+  color: var(--primary-color);
+}
+
+.place-name {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.place-location {
+  font-size: 0.8rem;
+  color: var(--secondary-text);
+}
+
+.selected-places-container {
+  margin-top: -1rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 1.5rem;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  border: 1px dashed var(--gray-border);
+}
+
+.empty-icon {
+  width: 60px;
+  height: 60px;
+  opacity: 0.6;
+  margin-bottom: 0.5rem;
+}
+
+.hint-text {
+  font-size: 0.85rem;
+  color: var(--secondary-text);
+  margin-top: 0.25rem;
+}
+
+.places-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.place-card {
+  background-color: white;
+  border: 1px solid var(--gray-border);
+  border-radius: 8px;
+  padding: 0.5rem 1rem; /* Giảm padding-top/bottom, giữ padding trái/phải */
+  margin-top: 0.5rem;
+  display: flex;          /* Sử dụng flexbox */
+  flex-direction: column; /* Xếp các phần tử theo chiều dọc */
+  width: auto;        /* Đảm bảo không vượt quá container */
+  height: auto;           /* Chiều cao tự động */
+}
+
+.place-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.place-info {
+  display: flex;
+  align-items: center;
+}
+
+.place-info .place-icon {
+  margin-right: 0.5rem;
+  color: var(--primary-color);
+}
+
+.place-name {
+  font-weight: 500;
+}
+
+.remove-btn {
+  background: none;
+  border: none;
+  color: var(--secondary-text);
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-btn:hover {
+  color: var(--error-color);
+}
+
+.date-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.date-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.date-group label {
+  font-size: 0.8rem;
+  color: var(--secondary-text);
+  margin-bottom: 0.25rem;
+}
+
+.date-group input {
+  padding: 0.5rem;
+  border: 1px solid var(--gray-border);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
 
