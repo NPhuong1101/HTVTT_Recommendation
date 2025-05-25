@@ -58,8 +58,14 @@ const AuthForm = () => {
           email: formData.email,
           password: formData.password
         });
+
         if (res.data.success) {
-          localStorage.setItem('user', JSON.stringify(res.data.user));
+          // Đảm bảo lưu đúng cấu trúc
+          localStorage.setItem('user', JSON.stringify({
+            id: res.data.user.id,
+            name: res.data.user.name,
+            email: res.data.user.email
+          }));
           navigate('/');
         }
       } catch (err) {
@@ -86,7 +92,15 @@ const AuthForm = () => {
             ...formData,
             travelHistory
           });
-          localStorage.setItem('user', JSON.stringify(res.data));
+          
+          console.log("Register response:", res.data); // Thêm dòng này để debug
+          
+          // Đảm bảo res.data có chứa id người dùng
+          localStorage.setItem('user', JSON.stringify({
+            id: res.data.user_id || res.data.id, // <-- Kiểm tra cả 2 trường hợp
+            name: formData.name,
+            email: formData.email
+          }));
           navigate('/profile');
         } catch (err) {
           alert('Đăng ký thất bại. Vui lòng thử lại.');

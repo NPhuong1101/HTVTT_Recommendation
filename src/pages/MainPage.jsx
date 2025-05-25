@@ -13,6 +13,15 @@ const MainPage = () => {
   const [error, setError] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const navigate = useNavigate();
+  const [recommendations, setRecommendations] = useState([]);
+  const [userId, setUserId] = useState(localStorage.getItem('userId'));
+
+  useEffect(() => {
+    const storedId = localStorage.getItem('userId');
+    if (storedId && storedId !== userId) {
+      setUserId(storedId);
+    }
+  }, [userId]);
 
   useEffect(() => {
     const fetchDestinations = async () => {
@@ -32,6 +41,36 @@ const MainPage = () => {
 
     fetchDestinations();
   }, []);
+
+  useEffect(() => {
+    console.log("🔥 useEffect chạy vì userId:", userId);
+    const fetchRecommendations = async () => {
+      try {
+        if (!userId) {
+          console.log("🚫 Không có userId → không gọi API");
+          return;
+        }
+
+        const response = await axios.post('/api/suggest/user', { user_id: userId });
+        console.log("✅ Gợi ý từ API /api/suggest/user:", response.data);
+        setRecommendations(response.data);
+
+      } catch (err) {
+        console.error("❌ Lỗi khi fetch gợi ý:", err);
+      }
+    };
+
+    fetchRecommendations();
+  }, [userId]);
+
+  useEffect(() => {
+    console.log("📦 recommendations cập nhật:", recommendations);
+  }, [recommendations]);
+
+  useEffect(() => {
+    console.log("userId hiện tại:", userId);
+    console.log("recommendations hiện tại:", recommendations);
+  }, [recommendations]);
 
   const handlePrev = () => {
     setCurrentIndex(prev => (prev === 0 ? destinations.length - 4 : prev - 1));
@@ -92,6 +131,21 @@ const MainPage = () => {
           </button>
         </div>
       </div>
+
+      {userId && recommendations.length > 0 && (
+        <div className="recommended-destination">
+          <h2 className="tt">Recommended for You</h2>
+          <div className="carousel">
+            {recommendations.map((place) => (
+              <PlaceCard 
+                key={place.id}
+                place={place}
+                onClick={() => handlePlaceClick(place)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
       
       <Footer />
     </>

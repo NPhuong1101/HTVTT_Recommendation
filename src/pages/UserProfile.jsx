@@ -63,7 +63,6 @@ const UserProfile = () => {
     loadUserHistory();
   }, []);
 
-
   const fetchRecommendations = async (history, userId) => {
     if (history.length === 0 || !userId) return;
 
@@ -71,10 +70,15 @@ const UserProfile = () => {
       const response = await axios.post('/api/suggest/user', {
         user_id: userId
       });
-      console.log("Gợi ý trả về:", response.data);
-      setRecommendations(response.data);
+      
+      if (response.data && response.data.recommendations) {
+        setRecommendations(response.data.recommendations);
+      } else {
+        setRecommendations([]);
+      }
     } catch (error) {
       console.error("Error fetching recommendations:", error);
+      setRecommendations([]);
     }
   };
 
@@ -189,6 +193,12 @@ const UserProfile = () => {
   const handleRemovePlace = (placeId) => {
     setSelectedPlaces(prev => prev.filter(place => place.placeId !== placeId));
   };
+
+  useEffect(() => {
+    if (user && travelHistory.length > 0) {
+      fetchRecommendations(travelHistory, user.id);
+    }
+  }, [travelHistory]);
 
   return !user ? (
     <div>Đang tải hồ sơ người dùng...</div>

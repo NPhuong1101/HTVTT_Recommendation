@@ -11,6 +11,7 @@ from datetime import datetime
 import traceback
 import subprocess
 import requests
+import json
 
 # Đường dẫn đến file CSV
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -18,6 +19,9 @@ DATA_DIR = os.path.join(BASE_DIR, '../public/data')
 USERS_CSV = os.path.join(DATA_DIR, 'users.csv')
 TRAVEL_HISTORY_CSV = os.path.join(DATA_DIR, 'user_travel_history.csv')
 INFO_TRIP_CSV = os.path.join(DATA_DIR, 'Info-trip.csv')
+RECOMMENDATIONS_CSV = os.path.join(DATA_DIR, 'recommendations.csv')
+GROUND_TRUTH_CSV = os.path.join(DATA_DIR, 'ground_truth.csv')
+
 
 app = Flask(__name__)
 CORS(app)  # Bật CORS cho tất cả routes
@@ -48,26 +52,44 @@ def home():
 # Gợi ý địa điểm du lịch trong Destination (gửi 1 id địa điểm vào contentbase.py)
 @app.route('/api/suggest', methods=['POST'])
 def suggest():
-    data = request.get_json()
-    place_id = data.get('id', '')
-
     try:
+        data = request.get_json()
+        place_id = data.get('id')
+        user_id = data.get('user_id', '0')
+        
+        if not place_id:
+            return jsonify({"error": "Place ID is required"}), 400
+
+        place_ids = [place_id] if not isinstance(place_id, list) else place_id
+        
         script_path = os.path.join(os.path.dirname(__file__), 'contentbase.py')
+        args = [sys.executable, script_path] + [str(pid) for pid in place_ids] + [str(user_id)]
+        
         result = subprocess.run(
-            [sys.executable, script_path, str(place_id)],
+            args,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            shell=True,
             encoding='utf-8',
-            errors='replace',
-            check=True
+            errors='replace'
         )
-        print(f"[DEBUG] Suggestion result: {result.stdout}")
-        return result.stdout
-    except subprocess.CalledProcessError as e:
-        print(f"❌ [ERROR] subprocess failed: {e.stderr}")
-        return jsonify([])
+        
+        # Debug logging
+        print(f"Contentbase.py stdout: {result.stdout}")
+        print(f"Contentbase.py stderr: {result.stderr}")
+        
+        try:
+            result_data = json.loads(result.stdout)
+            if "error" in result_data:
+                return jsonify({"error": result_data["error"]}), 500
+            return jsonify(result_data)
+        except json.JSONDecodeError as e:
+            print(f"Failed to parse JSON: {e}")
+            return jsonify({"error": "Invalid response from recommendation engine"}), 500
+            
+    except Exception as e:
+        print(f"Error in suggest endpoint: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/get-csv')
 def get_csv():
@@ -261,14 +283,7 @@ def login():
         email = data.get('email')
         password = data.get('password')
         
-        if not email or not password:
-            return jsonify({"error": "Email và mật khẩu là bắt buộc"}), 400
-        
-        # Đường dẫn chính xác
         csv_path = os.path.join(os.path.dirname(__file__), '../public/data/users.csv')
-        if not os.path.exists(csv_path):
-            return jsonify({"error": "User database not found"}), 500
-            
         with open(csv_path, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
@@ -276,18 +291,13 @@ def login():
                     return jsonify({
                         "success": True,
                         "user": {
-                            "id": row.get('id', ''),
-                            "name": row.get('name', ''),
-                            "email": row.get('email', '')
+                            "id": row.get('id'),  # <-- Đảm bảo trả về đúng id
+                            "name": row.get('name'),
+                            "email": row.get('email')
                         }
                     })
-        
-        return jsonify({"error": "Email hoặc mật khẩu không đúng"}), 401
-
+        return jsonify({"error": "Invalid credentials"}), 401
     except Exception as e:
-        import traceback
-        print(f"Login error: {str(e)}")
-        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 # Lấy thông tin địa điểm du lịch trong UserProfile
@@ -353,29 +363,24 @@ def get_user_history(user_id):
 @app.route('/api/suggest/user', methods=['POST'])
 def suggestUser():
     data = request.get_json()
-    user_id = data.get('user_id', None)
+    user_id = data.get('user_id')
 
     if not user_id:
         return jsonify({"error": "Missing user_id"}), 400
 
-    csv_path = os.path.join(os.path.dirname(__file__), '../public/data/user_travel_history.csv')
-
     try:
-        df = pd.read_csv(csv_path)
-        # Chuyển place_id sang số nguyên, loại bỏ giá trị không hợp lệ
+        df = pd.read_csv(TRAVEL_HISTORY_CSV)
         df['place_id'] = pd.to_numeric(df['place_id'], errors='coerce')
         df = df.dropna(subset=['place_id'])
         df['place_id'] = df['place_id'].astype(int)
 
-        # Lọc các place_id người dùng đã du lịch
         visited_ids = df[df['user_id'] == user_id]['place_id'].unique().tolist()
 
         if not visited_ids:
             return jsonify([])
 
-        # Truyền nhiều ID làm đối số cho contentbase.py (đã được sửa nhận list)
-        script_path = os.path.join(os.path.dirname(__file__), 'contentbase.py')
-        args = [sys.executable, script_path] + list(map(str, visited_ids))
+        script_path = os.path.join(BASE_DIR, 'contentbase.py')
+        args = [sys.executable, script_path] + list(map(str, visited_ids)) + [str(user_id)]
 
         result = subprocess.run(
             args,
@@ -387,13 +392,17 @@ def suggestUser():
             errors='replace',
             check=True
         )
-
-        print(f"[DEBUG] Suggestion result for user {user_id}: {result.stdout}", file=sys.stderr)
-        return result.stdout
+        
+        # Xử lý kết quả JSON
+        try:
+            result_data = json.loads(result.stdout)
+            return jsonify(result_data)
+        except json.JSONDecodeError:
+            return jsonify({"error": "Invalid response from recommendation engine"}), 500
 
     except Exception as e:
         print(f"❌ [ERROR] Failed suggesting for user {user_id}: {e}", file=sys.stderr)
-        return jsonify([])
+        return jsonify({"error": str(e)}), 500
 
 # Xóa địa điểm đã du lịch trong UserProfile
 @app.route('/api/delete-user-place/<history_id>', methods=['DELETE'])

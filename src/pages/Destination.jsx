@@ -11,27 +11,41 @@ const Destination = () => {
     const [place, setPlace] = useState(null);
     const [suggestions, setSuggestions] = useState([]);
     const [loading, setLoading] = useState(true);
+    const loggedInUserId = Number(localStorage.getItem('user_id')) || 0;
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Lấy thông tin địa điểm
-                const placeResponse = await axios.get(`/api/place/${id}`);
-                setPlace(placeResponse.data);
-                
-                // Lấy gợi ý
-                const suggestionsResponse = await axios.post('/api/suggest', {
-                    id: placeResponse.data["id"]
-                });
+            const placeResponse = await axios.get(`/api/place/${id}`);
+            setPlace(placeResponse.data);
 
-                setSuggestions(suggestionsResponse.data);
+            // Lấy user_id từ localStorage
+            const userData = localStorage.getItem('user');
+            const loggedInUserId = userData ? JSON.parse(userData).id : '0';
+            
+            console.log("Sending request with:", {
+                id: placeResponse.data.id,
+                user_id: loggedInUserId
+            });
+
+            const suggestionsResponse = await axios.post('/api/suggest', {
+                id: placeResponse.data.id,
+                user_id: loggedInUserId
+            }, {
+                headers: {
+                'Content-Type': 'application/json'
+                }
+            });
+            
+            console.log("Recommendations received:", suggestionsResponse.data);
+            setSuggestions(suggestionsResponse.data.recommendations || []);
             } catch (error) {
-                console.error("Error fetching data:", error);
+            console.error("Error fetching data:", error.response ? error.response.data : error.message);
             } finally {
-                setLoading(false);
+            setLoading(false);
             }
         };
-        
+
         fetchData();
     }, [id]);
 
