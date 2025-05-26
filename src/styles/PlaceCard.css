@@ -1,6 +1,6 @@
 .place-card {
-  width: 280px; /* Cố định chiều rộng */
-  height: 350px; /* Cố định chiều cao */
+  width: 280px; 
+  height: 350px; 
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -19,7 +19,7 @@
   width: 100%;
   height: 200px;
   overflow: hidden;
-  flex-shrink: 0; /* Ngăn không cho co lại */
+  flex-shrink: 0; 
 }
 
 .image-container img {
@@ -58,5 +58,5 @@
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 0.8rem;
-  margin-top: auto; /* Đẩy badge xuống dưới cùng */
+  margin-top: auto; 
 }

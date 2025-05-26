@@ -8,7 +8,7 @@ const Footer = () =>{
             <div className="footer-content">
                 <div className="grid">
                     <div>
-                        <h2 className="footer-title">Travel Explorer</h2>
+                        <h2 className="footer-title">TravelVN</h2>
                         <p className="footer-description">Your trusted partner for unforgettable travel experiences. Explore with us.</p>
                     </div>
                     <div>
@@ -22,7 +22,7 @@ const Footer = () =>{
                     </div>
                 </div>
                 <div className="footer-bottom">
-                    <p>© 2025 Travel Explorer. All rights reserved.</p>
+                    <p>© 2025 TravelVN. All rights reserved.</p>
                 </div>
             </div>
         </footer>

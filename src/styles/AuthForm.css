@@ -204,7 +204,6 @@ html, body, #root {
   background-color: rgba(16, 185, 129, 0.1); 
 }
 
-/* Thêm vào file CSS */
 .travel-history-step {
   margin-top: -1rem;
 }
@@ -237,7 +236,6 @@ html, body, #root {
   color: var(--secondary-text);
 }
 
-/* Phần gợi ý địa điểm */
 .popular-places-container {
   background-color: #f8fafc;
   border-radius: 8px;
@@ -280,12 +278,11 @@ html, body, #root {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  max-height: 250px; /* Giới hạn chiều cao phần tags */
-  overflow-y: auto;  /* Thêm thanh cuộn */
+  max-height: 250px;
+  overflow-y: auto; 
   padding: 0.5rem 0;
 }
 
-/* Tùy chỉnh thanh cuộn */
 .suggestion-tags::-webkit-scrollbar,
 .popular-places-container::-webkit-scrollbar {
   width: 6px;
@@ -317,7 +314,6 @@ html, body, #root {
   background-color: #bae6fd;
 }
 
-/* Kết quả tìm kiếm */
 .search-results-container {
   border: 1px solid var(--gray-border);
   border-radius: 8px;
@@ -388,12 +384,12 @@ html, body, #root {
   background-color: white;
   border: 1px solid var(--gray-border);
   border-radius: 8px;
-  padding: 0.5rem 1rem; /* Giảm padding-top/bottom, giữ padding trái/phải */
+  padding: 0.5rem 1rem; 
   margin-top: 0.5rem;
-  display: flex;          /* Sử dụng flexbox */
-  flex-direction: column; /* Xếp các phần tử theo chiều dọc */
-  width: auto;        /* Đảm bảo không vượt quá container */
-  height: auto;           /* Chiều cao tự động */
+  display: flex;       
+  flex-direction: column; 
+  width: auto;       
+  height: auto;        
 }
 
 .place-header {
