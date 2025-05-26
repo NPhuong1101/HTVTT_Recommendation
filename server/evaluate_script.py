@@ -1,101 +1,120 @@
 import pandas as pd
 from collections import defaultdict
 import os
-from collections import Counter
-import math
 
-def evaluate_recommendation_system(recommendations, ground_truth, all_items):
-    total_users = len(ground_truth)
-    precision_list, recall_list, f1_list, ap_list = [], [], [], []
-    item_counts = Counter()
+def load_recommendations(path):
+    """Tải dữ liệu gợi ý từ CSV"""
+    df = pd.read_csv(path)
+    recs = defaultdict(list)
+    for _, row in df.iterrows():
+        key = (str(row['user_id']), str(row['source_place_ids']))
+        recs[key] = str(row['recommended_place_ids']).split('|')
+    return recs
 
+def load_ground_truth(path):
+    """Tải dữ liệu ground truth từ CSV"""
+    df = pd.read_csv(path)
+    gt = defaultdict(list)
+    for _, row in df.iterrows():
+        key = (str(row['user_id']), str(row['source_place_id']))
+        gt[key] = str(row['clicked_place_ids']).split('|')
+    return gt
+
+def load_all_items(path):
+    """Tải tất cả các địa điểm từ Info-trip.csv"""
+    df = pd.read_csv(path)
+    return set(df['id'].astype(str).unique())
+
+def load_user_history(path):
+    """Tải lịch sử du lịch của người dùng"""
+    df = pd.read_csv(path)
+    history = defaultdict(set)
+    for _, row in df.iterrows():
+        user_id = str(row['user_id'])
+        place_id = str(row['place_id'])
+        history[user_id].add(place_id)
+    return history
+
+def evaluate(recommendations, ground_truth, all_items, user_history, k=5):
+    """Đánh giá hệ thống gợi ý"""
+    metrics = {
+        'Precision@k': [],
+        'Recall@k': [],
+        'F1@k': [],
+        'AP@k': []
+    }
+
+    # Tính coverage
+    all_recommended = set()
     for recs in recommendations.values():
-        item_counts.update(recs)
+        all_recommended.update(recs[:k])
+    coverage = len(all_recommended) / len(all_items) if all_items else 0
 
-    recommended_items = set()
+    # Đánh giá từng cặp (user_id, source_place_id)
+    for key in ground_truth:
+        if key not in recommendations:
+            continue
 
-    for user in ground_truth:
-        pred = recommendations.get(user, [])
-        actual = ground_truth[user]
+        user_id = key[0]
+        pred = recommendations[key][:k]
+        actual = ground_truth[key]
+
         pred_set = set(pred)
         actual_set = set(actual)
 
-        # Precision, Recall, F1
         tp = len(pred_set & actual_set)
         fp = len(pred_set - actual_set)
-        fn = len(actual_set - pred_set)
+
+        # Tổng số mục đúng là tổng số địa điểm user đã du lịch
+        relevant_set = user_history.get(user_id, set())
+        fn = len(relevant_set - pred_set)
 
         precision = tp / (tp + fp) if (tp + fp) > 0 else 0
         recall = tp / (tp + fn) if (tp + fn) > 0 else 0
-        f1 = (2 * precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+        f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
 
-        precision_list.append(precision)
-        recall_list.append(recall)
-        f1_list.append(f1)
-
-        # MAP
+        # Average Precision
+        ap = 0
         hits = 0
-        sum_precisions = 0
-        for i, item in enumerate(pred):
+        for i, item in enumerate(pred, 1):
             if item in actual_set:
                 hits += 1
-                sum_precisions += hits / (i + 1)
-        ap = sum_precisions / len(actual) if actual else 0
-        ap_list.append(ap)
+                ap += hits / i
+        ap /= len(actual) if actual else 1
 
-        # Coverage
-        recommended_items.update(pred)
+        metrics['Precision@k'].append(precision)
+        metrics['Recall@k'].append(recall)
+        metrics['F1@k'].append(f1)
+        metrics['AP@k'].append(ap)
 
-    precision_avg = sum(precision_list) / total_users
-    recall_avg = sum(recall_list) / total_users
-    f1_avg = sum(f1_list) / total_users
-    map_score = sum(ap_list) / total_users
-    coverage_score = len(recommended_items) / len(all_items) if all_items else 0
-
-    return {
-        'Precision': precision_avg,
-        'Recall': recall_avg,
-        'F1-score': f1_avg,
-        'MAP': map_score,
-        'Coverage': coverage_score
+    results = {
+        'Precision@k': sum(metrics['Precision@k']) / len(metrics['Precision@k']) if metrics['Precision@k'] else 0,
+        'Recall@k': sum(metrics['Recall@k']) / len(metrics['Recall@k']) if metrics['Recall@k'] else 0,
+        'F1@k': sum(metrics['F1@k']) / len(metrics['F1@k']) if metrics['F1@k'] else 0,
+        'MAP@k': sum(metrics['AP@k']) / len(metrics['AP@k']) if metrics['AP@k'] else 0,
+        'Coverage': coverage
     }
 
-# Đọc file recommendations.csv
-def load_recommendations(path):
-    df = pd.read_csv(path)
-    recs = {}
-    for _, row in df.iterrows():
-        user = row["user_id"]
-        items = row["recommendations"].split("|")
-        recs[user] = items
-    return recs
-
-# Đọc file ground_truth.csv
-def load_ground_truth(path):
-    df = pd.read_csv(path)
-    gt = {}
-    for _, row in df.iterrows():
-        user = row["user_id"]
-        items = row["actual"].split("|")
-        gt[user] = items
-    return gt
-
-# Đọc danh sách toàn bộ item từ Info-trip.csv
-def load_all_items(path):
-    df = pd.read_csv(path)
-    return set(df["Tên địa điểm"].dropna().unique())
+    return results
 
 def main():
     current_dir = os.path.dirname(os.path.abspath(__file__))
 
-    recommendations = load_recommendations(os.path.join(current_dir, "recommendations.csv"))
-    ground_truth = load_ground_truth(os.path.join(current_dir, "ground_truth.csv"))
-    all_items = load_all_items(os.path.join(current_dir, "Info-trip.csv"))
+    recs_path = os.path.join(current_dir, "../public/data/recommendations.csv")
+    gt_path = os.path.join(current_dir, "../public/data/ground_truth.csv")
+    items_path = os.path.join(current_dir, "../public/data/Info-trip.csv")
+    history_path = os.path.join(current_dir, "../public/data/user_travel_history.csv")
 
-    result = evaluate_recommendation_system(recommendations, ground_truth, all_items)
+    recommendations = load_recommendations(recs_path)
+    ground_truth = load_ground_truth(gt_path)
+    all_items = load_all_items(items_path)
+    user_history = load_user_history(history_path)
 
-    for k, v in result.items():
-        print(f"{k}: {v:.4f}")
+    results = evaluate(recommendations, ground_truth, all_items, user_history, k=5)
+
+    print("\n=== Evaluation Results ===")
+    for metric, value in results.items():
+        print(f"{metric}: {value:.4f}")
 
 if __name__ == "__main__":
     main()

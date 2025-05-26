@@ -6,25 +6,37 @@ import uuid
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import csv
 
-def save_recommendations(user_id, recommended_place_ids):
-    """Lưu recommendations vào CSV với encoding UTF-8"""
+def save_recommendations(user_id, source_place_ids, recommended_place_ids):
+    """Lưu gợi ý: mỗi dòng gồm user_id, source_place_ids, recommended_place_ids"""
     try:
-        recommendation_id = str(uuid.uuid4())
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         current_dir = os.path.dirname(os.path.abspath(__file__))
         recommendations_file = os.path.join(current_dir, "../public/data/recommendations.csv")
-        
-        # Mở file với encoding UTF-8 và newline=''
+
+        os.makedirs(os.path.dirname(recommendations_file), exist_ok=True)
+
+        # Ghi header nếu chưa tồn tại
+        if not os.path.exists(recommendations_file):
+            with open(recommendations_file, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerow(['user_id', 'source_place_ids', 'recommended_place_ids', 'timestamp'])
+
+        # Ghi dòng dữ liệu
         with open(recommendations_file, 'a', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
-            for rank, place_id in enumerate(recommended_place_ids, start=1):
-                writer.writerow([recommendation_id, user_id, place_id, rank, timestamp])
-        
-        return recommendation_id
+            writer.writerow([
+                user_id,
+                '|'.join(map(str, source_place_ids)),
+                '|'.join(map(str, recommended_place_ids)),
+                timestamp
+            ])
+
+        return True
     except Exception as e:
         print(f"Error saving recommendations: {str(e)}", file=sys.stderr)
-        return str(uuid.uuid4())
+        return False
 
 def main():
     try:
@@ -89,12 +101,12 @@ def main():
 
         # Lưu recommendations
         recommended_ids = [place["id"] for place in result]
-        rec_id = save_recommendations(user_id, recommended_ids)
-        
+        save_recommendations(user_id, input_ids, recommended_ids)
+
         return {
-            "recommendation_id": rec_id,
             "recommendations": result
         }
+
         
     except Exception as e:
         return {"error": str(e)}

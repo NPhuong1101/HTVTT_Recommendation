@@ -49,6 +49,33 @@ const Destination = () => {
         fetchData();
     }, [id]);
 
+    const handleSuggestionClick = async (suggestion) => {
+        try {
+            const userData = JSON.parse(localStorage.getItem('user'));
+            if (userData?.id) {
+            const response = await axios.post('/api/save-ground-truth', {
+                user_id: userData.id,
+                place_id: id,             // nơi gợi ý được tạo từ đâu (source_place_id)
+                clicked_id: suggestion.id // địa điểm người dùng đã click (clicked_place_id)
+            }, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }); 
+            
+            if (!response.data.success) {
+                console.error("Failed to save ground truth:", response.data.error);
+                // Vẫn chuyển trang dù không lưu được ground truth
+            }
+            }
+            navigate(`/destination/${suggestion.id}`);
+        } catch (error) {
+            console.error("Error saving ground truth:", error);
+            // Vẫn cho phép chuyển trang dù có lỗi
+            navigate(`/destination/${suggestion.id}`);
+        }
+    };
+
     if (loading) return <div>Loading...</div>;
     if (!place) return <div className="error-message">Không tìm thấy thông tin địa điểm</div>;
 
@@ -100,7 +127,7 @@ const Destination = () => {
                                         <div
                                             className="suggestion-card"
                                             key={index}
-                                            onClick={() => navigate(`/destination/${suggestion.id}`)}
+                                            onClick={() => handleSuggestionClick(suggestion)}
                                             style={{ cursor: 'pointer' }} // tùy chọn: trỏ chuột dạng "bàn tay"
                                         >
                                             <img
@@ -117,11 +144,11 @@ const Destination = () => {
                                             <p>{suggestion.category}</p>
                                             </div>
                                             <button
-                                            className="save-button"
-                                            onClick={(e) => {
-                                                e.stopPropagation(); // Ngăn việc click vào button cũng trigger điều hướng
-                                                // TODO: xử lý lưu yêu thích nếu cần
-                                            }}
+                                                className="save-button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // Ngăn việc click vào button cũng trigger điều hướng
+                                                    // TODO: xử lý lưu yêu thích nếu cần
+                                                }}
                                             >
                                             Save
                                             </button>

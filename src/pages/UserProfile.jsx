@@ -200,6 +200,24 @@ const UserProfile = () => {
     }
   }, [travelHistory]);
 
+  const handlePlaceClick = async (place) => {
+    try {
+      const userData = JSON.parse(localStorage.getItem('user'));
+      if (!userData?.id) return;
+      
+      // Gọi API lưu ground truth
+      await axios.post('/api/save-ground-truth', {
+        user_id: userData.id,
+        place_id: place.id
+      });
+      
+      // Chuyển đến trang địa điểm
+      navigate(`/destination/${place.id}`);
+    } catch (error) {
+      console.error("Error saving ground truth:", error);
+    }
+  };
+
   return !user ? (
     <div>Đang tải hồ sơ người dùng...</div>
   ) : (
@@ -381,7 +399,7 @@ const UserProfile = () => {
                 <PlaceCard 
                   key={place.id} 
                   place={place}
-                  onClick={() => navigate(`/destination/${place.id}`)}
+                  onClick={() => handlePlaceClick(place)}
                 />
               ))}
             </div>

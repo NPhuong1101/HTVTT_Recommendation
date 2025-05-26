@@ -1,4 +1,3 @@
-user_id,actual
-user1,Cầu Rồng|Chùa Linh Ứng
-user2,Chợ Hàn
-user3,Chùa Linh Ứng|Cầu Rồng
+user_id,source_place_id,clicked_place_ids,timestamp
+91f99448-ee96-486f-8835-aa2e15116fcc,22,250|21,2025-05-26T10:29:54.645331
+91f99448-ee96-486f-8835-aa2e15116fcc,69,74|149|144,2025-05-26T10:34:05.217271

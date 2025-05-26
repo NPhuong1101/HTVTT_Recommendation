@@ -436,5 +436,65 @@ def delete_user_place(history_id):
         print("Lỗi:", str(e))
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/save-ground-truth', methods=['POST'])
+def save_ground_truth():
+    try:
+        data = request.json
+        user_id = data.get('user_id')
+        source_place_id = str(data.get('place_id'))  # nơi đã click để sinh gợi ý
+        clicked_place_id = str(data.get('clicked_id'))  # địa điểm được click
+
+        if not user_id or not source_place_id or not clicked_place_id:
+            return jsonify({"error": "Missing user_id, source_place_id or clicked_place_id"}), 400
+
+        ground_truth_path = os.path.join(DATA_DIR, 'ground_truth.csv')
+        os.makedirs(DATA_DIR, exist_ok=True)
+
+        # Tạo file nếu chưa có
+        if not os.path.exists(ground_truth_path):
+            with open(ground_truth_path, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerow(['user_id', 'source_place_id', 'clicked_place_ids', 'timestamp'])
+
+        # Đọc toàn bộ ground truth
+        updated = False
+        rows = []
+        with open(ground_truth_path, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if row['user_id'] == user_id and row['source_place_id'] == source_place_id:
+                    clicked = set(row['clicked_place_ids'].split('|')) if row['clicked_place_ids'] else set()
+                    if clicked_place_id not in clicked:
+                        clicked.add(clicked_place_id)
+                        row['clicked_place_ids'] = '|'.join(clicked)
+                        row['timestamp'] = datetime.now().isoformat()
+                    updated = True
+
+                rows.append(row)  # phải nằm ngoài if, nhưng không được gán sai nhầm giá trị
+
+        # Nếu không cập nhật dòng nào thì thêm dòng mới
+        if not updated:
+            rows.append({
+                'user_id': user_id,
+                'source_place_id': source_place_id,
+                'clicked_place_ids': clicked_place_id,
+                'timestamp': datetime.now().isoformat()
+            })
+
+        # Ghi lại file
+        with open(ground_truth_path, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=['user_id', 'source_place_id', 'clicked_place_ids', 'timestamp'])
+            writer.writeheader()
+            writer.writerows(rows)
+
+        return jsonify({"success": True})
+    
+    except Exception as e:
+        print(f"Error saving ground truth: {str(e)}", file=sys.stderr)
+        return jsonify({
+            "error": "Failed to save ground truth",
+            "details": str(e)
+        }), 500
+
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000)
