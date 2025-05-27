@@ -55,8 +55,8 @@ const Destination = () => {
             if (userData?.id) {
             const response = await axios.post('/api/save-ground-truth', {
                 user_id: userData.id,
-                place_id: id,             // nơi gợi ý được tạo từ đâu (source_place_id)
-                clicked_id: suggestion.id // địa điểm người dùng đã click (clicked_place_id)
+                place_id: id,
+                clicked_id: suggestion.id 
             }, {
                 headers: {
                     'Content-Type': 'application/json'

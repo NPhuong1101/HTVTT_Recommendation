@@ -20,11 +20,28 @@ const UserProfile = () => {
   const [selectedPlaces, setSelectedPlaces] = useState([]);
 
   function isOverlapping(start1, end1, start2, end2) {
-    const s1 = new Date(start1);
-    const e1 = new Date(end1);
-    const s2 = new Date(start2);
-    const e2 = new Date(end2);
-    return s1 <= e2 && s2 <= e1;
+    try {
+      const s1 = new Date(start1);
+      const e1 = new Date(end1);
+      const s2 = new Date(start2);
+      const e2 = new Date(end2);
+      
+      // Kiểm tra ngày hợp lệ
+      if (isNaN(s1.getTime())) throw new Error(`Ngày bắt đầu "${start1}" không hợp lệ`);
+      if (isNaN(e1.getTime())) throw new Error(`Ngày kết thúc "${end1}" không hợp lệ`);
+      if (isNaN(s2.getTime())) throw new Error(`Ngày bắt đầu "${start2}" không hợp lệ`);
+      if (isNaN(e2.getTime())) throw new Error(`Ngày kết thúc "${end2}" không hợp lệ`);
+      
+      // Kiểm tra end >= start
+      if (e1 < s1) throw new Error(`Ngày kết thúc phải sau ngày bắt đầu (${start1} - ${end1})`);
+      if (e2 < s2) throw new Error(`Ngày kết thúc phải sau ngày bắt đầu (${start2} - ${end2})`);
+      
+      return s1 <= e2 && s2 <= e1;
+    } catch (error) {
+      console.error("Lỗi kiểm tra trùng lặp:", error);
+      alert(error.message);
+      return true; // Coi như trùng để ngăn lưu
+    }
   }
 
   useEffect(() => {
@@ -103,7 +120,12 @@ const UserProfile = () => {
     // 1. Kiểm tra trùng lặp trong selectedPlaces
     for (let i = 0; i < validPlaces.length; i++) {
       for (let j = i + 1; j < validPlaces.length; j++) {
-        if (isOverlapping(validPlaces[i].startDate, validPlaces[i].endDate, validPlaces[j].startDate, validPlaces[j].endDate)) {
+        if (isOverlapping(
+          validPlaces[i].startDate,
+          validPlaces[i].endDate,
+          validPlaces[j].startDate,
+          validPlaces[j].endDate
+        )) {
           alert(`Khoảng thời gian của địa điểm "${validPlaces[i].placeName}" bị trùng với "${validPlaces[j].placeName}".`);
           return;
         }
@@ -113,7 +135,12 @@ const UserProfile = () => {
     // 2. Kiểm tra trùng lặp với travelHistory đã lưu
     for (const newPlace of validPlaces) {
       for (const existing of travelHistory) {
-        if (isOverlapping(newPlace.startDate, newPlace.endDate, existing.startDate, existing.endDate)) {
+        if (isOverlapping(
+          newPlace.startDate,
+          newPlace.endDate,
+          existing.startDate,
+          existing.endDate
+        )) {
           alert(`Địa điểm "${newPlace.placeName}" có khoảng thời gian trùng với "${existing.placeName}" từ ${existing.startDate} đến ${existing.endDate}.`);
           return;
         }
@@ -124,30 +151,42 @@ const UserProfile = () => {
       const updatedHistory = [...travelHistory];
 
       for (const place of validPlaces) {
-        updatedHistory.push({
+        const newRecord = {
           id: Date.now().toString() + Math.random(),
           userId: user.id,
           placeId: place.placeId,
           placeName: place.placeName,
           category: place.category || '',
+          location: place.location || '',
           startDate: place.startDate,
           endDate: place.endDate,
-          created_at: new Date().toISOString()
-        });
+          created_at: new Date().toISOString(),
+          placeImg: ''
+        };
 
-        await axios.post('/api/save-travel-history', {
-          userId: user.id,
-          placeId: place.placeId,
-          startDate: place.startDate,
-          endDate: place.endDate
-        });
+        updatedHistory.push(newRecord);
+
+        // Gọi API lưu vào user_travel_history.csv
+        try {
+          await axios.post('/api/save-travel-history', {
+            userId: user.id,
+            placeId: place.placeId,
+            startDate: place.startDate,
+            endDate: place.endDate
+          });
+        } catch (err) {
+          console.error("Lỗi khi lưu travel_history:", err);
+          alert(`Lỗi khi lưu vào travel_history cho địa điểm ${place.placeName}`);
+          return;
+        }
       }
 
       setTravelHistory(updatedHistory);
       setSelectedPlaces([]);
       setIsAddingPlace(false);
     } catch (error) {
-      console.error("Error adding places:", error);
+      console.error("Lỗi không xác định:", error);
+      alert("Đã xảy ra lỗi không xác định khi thêm địa điểm.");
     }
   };
 
@@ -182,10 +221,12 @@ const UserProfile = () => {
         placeName: place.name,
         category: place.category,
         location: place.location,
+        placeImg: place.image || '',
         startDate: '',
         endDate: ''
       }
     ]);
+
     setSearchResults([]);
     setSearchInput('');
   };
@@ -205,10 +246,16 @@ const UserProfile = () => {
       const userData = JSON.parse(localStorage.getItem('user'));
       if (!userData?.id) return;
       
-      // Gọi API lưu ground truth
+      // Lấy danh sách place_id từ lịch sử du lịch của user
+      const historyResponse = await axios.get(`/api/user-history-ids/${userData.id}`);
+      const sourcePlaceIds = historyResponse.data.map(item => item.placeId);
+      
+      // Gọi API lưu ground truth với danh sách place_id từ lịch sử
       await axios.post('/api/save-ground-truth', {
         user_id: userData.id,
-        place_id: place.id
+        source_place_id: sourcePlaceIds.join('|'), // Gửi dưới dạng chuỗi phân cách bằng |
+        clicked_place_ids: place.id,
+        timestamp: new Date().toISOString()
       });
       
       // Chuyển đến trang địa điểm

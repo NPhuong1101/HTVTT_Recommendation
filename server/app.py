@@ -441,51 +441,49 @@ def save_ground_truth():
     try:
         data = request.json
         user_id = data.get('user_id')
-        source_place_id = str(data.get('place_id'))  # nơi đã click để sinh gợi ý
-        clicked_place_id = str(data.get('clicked_id'))  # địa điểm được click
+        source_place_id = data.get('source_place_id')  # VD: "8|7"
+        clicked_place_id = str(data.get('clicked_place_ids'))  # VD: "86"
+        timestamp = data.get('timestamp', datetime.now().isoformat())
 
         if not user_id or not source_place_id or not clicked_place_id:
-            return jsonify({"error": "Missing user_id, source_place_id or clicked_place_id"}), 400
+            return jsonify({"error": "Missing required fields"}), 400
 
         ground_truth_path = os.path.join(DATA_DIR, 'ground_truth.csv')
         os.makedirs(DATA_DIR, exist_ok=True)
 
-        # Tạo file nếu chưa có
-        if not os.path.exists(ground_truth_path):
-            with open(ground_truth_path, 'w', newline='', encoding='utf-8') as f:
-                writer = csv.writer(f)
-                writer.writerow(['user_id', 'source_place_id', 'clicked_place_ids', 'timestamp'])
-
-        # Đọc toàn bộ ground truth
-        updated = False
+        # Đọc dữ liệu hiện có nếu file tồn tại
         rows = []
-        with open(ground_truth_path, 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if row['user_id'] == user_id and row['source_place_id'] == source_place_id:
-                    clicked = set(row['clicked_place_ids'].split('|')) if row['clicked_place_ids'] else set()
-                    if clicked_place_id not in clicked:
-                        clicked.add(clicked_place_id)
-                        row['clicked_place_ids'] = '|'.join(clicked)
-                        row['timestamp'] = datetime.now().isoformat()
-                    updated = True
+        updated = False
+        if os.path.exists(ground_truth_path):
+            with open(ground_truth_path, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    if row['user_id'] == user_id and row['source_place_id'] == source_place_id:
+                        # Nếu clicked_place_id chưa tồn tại, thêm vào
+                        existing_clicks = row['clicked_place_ids'].split('|')
+                        if clicked_place_id not in existing_clicks:
+                            existing_clicks.append(clicked_place_id)
+                        row['clicked_place_ids'] = '|'.join(existing_clicks)
+                        row['timestamp'] = timestamp
+                        updated = True
+                    rows.append(row)
 
-                rows.append(row)  # phải nằm ngoài if, nhưng không được gán sai nhầm giá trị
-
-        # Nếu không cập nhật dòng nào thì thêm dòng mới
         if not updated:
+            # Thêm dòng mới nếu không có bản ghi trùng
             rows.append({
                 'user_id': user_id,
                 'source_place_id': source_place_id,
                 'clicked_place_ids': clicked_place_id,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': timestamp
             })
 
-        # Ghi lại file
+        # Ghi lại toàn bộ file (ghi đè)
         with open(ground_truth_path, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=['user_id', 'source_place_id', 'clicked_place_ids', 'timestamp'])
+            fieldnames = ['user_id', 'source_place_id', 'clicked_place_ids', 'timestamp']
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerows(rows)
+            for row in rows:
+                writer.writerow(row)
 
         return jsonify({"success": True})
     
@@ -495,6 +493,28 @@ def save_ground_truth():
             "error": "Failed to save ground truth",
             "details": str(e)
         }), 500
+    
+@app.route('/api/user-history-ids/<user_id>', methods=['GET'])
+def get_user_history_ids(user_id):
+    try:
+        history_path = os.path.join(os.path.dirname(__file__), '../public/data/user_travel_history.csv')
+
+        if not os.path.exists(history_path):
+            return jsonify([])
+
+        place_ids = []
+        with open(history_path, 'r', encoding='utf-8') as f_history:
+            reader = csv.DictReader(f_history)
+            for row in reader:
+                if row.get('user_id') == user_id:
+                    place_id = row.get('place_id')
+                    if place_id:
+                        place_ids.append({ 'placeId': place_id })
+
+        return jsonify(place_ids)
+
+    except Exception as e:
+        return jsonify({ "error": str(e) }), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000)

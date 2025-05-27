@@ -17,7 +17,8 @@ def load_ground_truth(path):
     gt = defaultdict(list)
     for _, row in df.iterrows():
         key = (str(row['user_id']), str(row['source_place_id']))
-        gt[key] = str(row['clicked_place_ids']).split('|')
+        clicked_ids = str(row['clicked_place_ids']).split('|') if '|' in str(row['clicked_place_ids']) else [str(row['clicked_place_ids'])]
+        gt[key].extend(clicked_ids)
     return gt
 
 def load_all_items(path):
