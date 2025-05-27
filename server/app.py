@@ -1,3 +1,4 @@
+import random
 import sys
 from flask import Flask, send_from_directory
 from flask_cors import CORS
@@ -413,16 +414,16 @@ def delete_user_place(history_id):
         if not os.path.exists(history_path):
             return jsonify({"error": "Lịch sử không tồn tại"}), 404
 
-        # Đọc toàn bộ dữ liệu từ file
         with open(history_path, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             rows = list(reader)
             fieldnames = reader.fieldnames
 
-        # Lọc bỏ dòng có id trùng với history_id
+        print("Request delete history_id:", history_id)
+        print("All IDs in CSV:", [row['id'] for row in rows])
+
         new_rows = [row for row in rows if row['id'] != history_id]
 
-        # Ghi lại file nếu có thay đổi
         if len(new_rows) < len(rows):
             with open(history_path, 'w', encoding='utf-8', newline='') as f:
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -515,6 +516,43 @@ def get_user_history_ids(user_id):
 
     except Exception as e:
         return jsonify({ "error": str(e) }), 500
+
+# Lấy 5 địa điểm trong PopularDestinations.csv
+@app.route('/api/popular-places', methods=['GET'])
+def get_popular_places():
+    try:
+        csv_path = os.path.join(os.path.dirname(__file__), '../public/data/PopularDestinations.csv')
+        
+        if not os.path.exists(csv_path):
+            return jsonify({"error": "File not found"}), 404
+            
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            all_places = list(reader)
+            
+            # Lấy ngẫu nhiên 5 địa điểm
+            random_places = random.sample(all_places, min(5, len(all_places)))
+            
+            # Format dữ liệu trả về
+            result = []
+            for place in random_places:
+                result.append({
+                    'id': place.get('id'),
+                    'title': place.get('Tên địa điểm'),
+                    'description': place.get('Mô tả'),
+                    'location': place.get('Tỉnh thành'),
+                    'category': place.get('Thể loại'),
+                    'image': place.get('ID Ảnh URL địa điểm'),
+                    'map_link': place.get('Link google map')
+                })
+            
+            return jsonify(result)
+            
+    except Exception as e:
+        return jsonify({
+            "error": "Server error",
+            "details": str(e)
+        }), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000)

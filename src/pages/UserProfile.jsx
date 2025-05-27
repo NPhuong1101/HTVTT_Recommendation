@@ -71,9 +71,18 @@ const UserProfile = () => {
         }));
 
         setTravelHistory(historyData);
-        fetchRecommendations(historyData, parsedUser.id);
+
+        // Nếu không có lịch sử, lấy địa điểm phổ biến
+        if (historyData.length === 0) {
+          await fetchRandomPopularPlaces();
+        } else {
+          // Nếu có lịch sử, lấy gợi ý dựa trên lịch sử
+          fetchRecommendations(historyData, parsedUser.id);
+        }
       } catch (error) {
         console.error("Error loading travel history:", error);
+        // Nếu có lỗi khi load lịch sử, vẫn lấy địa điểm phổ biến
+        await fetchRandomPopularPlaces();
       }
     };
 
@@ -262,6 +271,31 @@ const UserProfile = () => {
       navigate(`/destination/${place.id}`);
     } catch (error) {
       console.error("Error saving ground truth:", error);
+    }
+  };
+
+  // Lấy 5 địa điểm ngẫu nhiên trong PopularDestinations.csv
+  const fetchRandomPopularPlaces = async () => {
+    try {
+      const response = await axios.get('/api/popular-places');
+      if (response.data && response.data.length > 0) {
+        // Format dữ liệu để phù hợp với component PlaceCard
+        const formattedPlaces = response.data.map(place => ({
+          id: place.id,
+          title: place.title,
+          description: place.description,
+          location: place.location,
+          category: place.category,
+          image: place.image,
+          map_link: place.map_link
+        }));
+        setRecommendations(formattedPlaces);
+      } else {
+        setRecommendations([]);
+      }
+    } catch (error) {
+      console.error("Lỗi khi lấy địa điểm phổ biến:", error);
+      setRecommendations([]);
     }
   };
 
