@@ -42,6 +42,7 @@
 .search-bar-container {
   flex: 1;
   margin: 0 48px;
+  margin-top: 1.5rem;
   max-width: 650px;
 }
 

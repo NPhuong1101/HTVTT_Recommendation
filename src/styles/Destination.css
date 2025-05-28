@@ -134,14 +134,14 @@
   top: 20px;
 }
 
-.suggestions-container {
+.dest-suggestions-container {
   background: var(--white);
   padding: 30px;
   border-radius: 12px;
   box-shadow: var(--shadow-md);
 }
 
-.suggestions-container h2 {
+.dest-suggestions-container h2 {
   font-size: 1.8rem;
   color: var(--primary);
   margin: 0 0 25px 0;
@@ -149,7 +149,8 @@
   border-bottom: 2px solid var(--primary-light);
 }
 
-.suggestion-card {
+/* Thay đổi từ .suggestion-card thành */
+.dest-suggestion-card {
   display: grid;
   grid-template-columns: 100px 1fr;
   gap: 15px;
@@ -161,139 +162,109 @@
   transition: var(--transition);
 }
 
-.suggestion-card:hover {
+.dest-suggestion-card:hover {
   transform: translateY(-5px);
   box-shadow: var(--shadow-sm);
   border-color: var(--primary);
 }
 
-.suggestion-card img {
-  width: 100%;
-  height: 500px;
-  object-fit: contain;
-  border-radius: 8px;
-  align-self: center;
-  image-rendering: auto;
+.dest-suggestion-card {
+  display: flex;
+  gap: 15px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: var(--white);
+  border-radius: 12px;
+  border: 1px solid var(--light-gray);
+  box-shadow: var(--shadow-md);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  align-items: flex-start;
+}
+
+.dest-suggestion-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-sm);
+  border-color: var(--primary);
+}
+
+.dest-suggestion-card img {
+  width: 150px;
+  height: 110px;
+  object-fit: cover;
+  border-radius: 10px;
+  flex-shrink: 0;
   background-color: var(--light);
 }
 
-.suggestion-card .info {
+.dest-info {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
 }
 
-.suggestion-card h3 {
+.dest-info h3 {
   font-size: 1.15rem;
   color: var(--dark);
-  margin: 0 0 5px 0;
-  font-weight: 600;
+  margin-bottom: 4px;
 }
 
-.suggestion-card p {
+.dest-info p {
   font-size: 0.95rem;
   color: var(--gray);
-  margin: 3px 0;
-  line-height: 1.5;
+  margin: 2px 0;
 }
 
-.suggestion-card .rating {
-  color: var(--secondary);
-  font-weight: 700;
-  margin-top: 5px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.suggestion-meta {
+.dest-suggestion-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
-.save-button {
-  background: var(--primary);
-  color: var(--white);
-  border: none;
-  padding: 8px 16px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: var(--transition);
-  display: inline-flex;
+.dest-rating {
+  font-weight: 600;
+  color: var(--secondary);
+  display: flex;
   align-items: center;
   gap: 5px;
 }
 
-.save-button:hover {
+.dest-save-button {
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.3s ease;
+}
+
+.dest-save-button:hover {
   background: #1E4D2A;
   transform: scale(1.05);
 }
 
-.error-message {
-  text-align: center;
-  padding: 40px;
-  color: #d32f2f;
-  font-size: 1.2rem;
-  background: #FFEBEE;
-  border-radius: 8px;
-  margin: 20px;
-}
-
+/* Responsive */
 @media (max-width: 768px) {
-  .destination-container {
-    padding: 0 15px;
-  }
-  
-  .destination-image {
-    height: 350px;
-  }
-  
-  .left-column, .suggestions-container {
-    padding: 20px;
-  }
-  
-  .left-column h1 {
-    font-size: 2rem;
-  }
-  
-  .suggestions-container h2 {
-    font-size: 1.5rem;
-  }
-  
-  .suggestion-card {
-    grid-template-columns: 80px 1fr;
-    gap: 12px;
-    padding: 12px;
-  }
-  
-  .suggestion-card img {
-    height: 70px;
-  }
-}
-
-@media (max-width: 480px) {
-  .destination-image {
-    height: 250px;
-  }
-  
-  .left-column h1 {
-    font-size: 1.8rem;
-  }
-  
-  .suggestion-card {
-    grid-template-columns: 1fr;
-  }
-  
-  .suggestion-card img {
-    width: 100%;
-    height: 120px;
-  }
-  
-  .map-container a {
-    width: 100%;
+  .dest-suggestion-card {
+    flex-direction: column;
+    align-items: center;
     text-align: center;
-    justify-content: center;
+  }
+
+  .dest-suggestion-card img {
+    width: 100%;
+    height: 160px;
+  }
+
+  .dest-info {
+    align-items: center;
+  }
+
+  .dest-suggestion-meta {
+    flex-direction: column;
+    gap: 8px;
   }
 }

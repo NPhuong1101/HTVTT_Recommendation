@@ -116,45 +116,43 @@ const Destination = () => {
                                 </div>
 
                                 {/* Cột bên phải: Gợi ý */}
-                                <div className="right-column suggestions-container">
-                                    <h2>Gợi ý điểm đến cho bạn</h2>
-                                    {suggestions.length === 0 ? (
+                                <div className="right-column dest-suggestions-container">
+                                <h2>Gợi ý điểm đến cho bạn</h2>
+                                {suggestions.length === 0 ? (
                                     <p>Không có gợi ý phù hợp.</p>
-                                    ) : (
-                                    suggestions.map((suggestion, index) => {
-                                        console.log("Suggestion:", suggestion);
-                                        return (
-                                        <div
-                                            className="suggestion-card"
-                                            key={index}
-                                            onClick={() => handleSuggestionClick(suggestion)}
-                                            style={{ cursor: 'pointer' }} // tùy chọn: trỏ chuột dạng "bàn tay"
+                                ) : (
+                                    suggestions.map((suggestion, index) => (
+                                    <div
+                                        className="dest-suggestion-card"
+                                        key={index}
+                                        onClick={() => handleSuggestionClick(suggestion)}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        <img
+                                        src={`https://drive.google.com/thumbnail?id=${suggestion.image}`}
+                                        alt={suggestion.title}
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = '/default-image.jpg';
+                                        }}
+                                        />
+                                        <div className="dest-info">
+                                        <h3>{suggestion.title}</h3>
+                                        <p><strong>{suggestion.location}</strong></p>
+                                        <p>{suggestion.category}</p>
+                                        </div>
+                                        <button
+                                        className="dest-save-button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            // TODO: xử lý lưu yêu thích
+                                        }}
                                         >
-                                            <img
-                                            src={`https://drive.google.com/thumbnail?id=${suggestion.image}`}
-                                            alt={suggestion.title}
-                                            onError={(e) => {
-                                                e.target.onerror = null;
-                                                e.target.src = '/default-image.jpg';
-                                            }}
-                                            />
-                                            <div className="info">
-                                            <h3>{suggestion.title}</h3>
-                                            <p><strong>{suggestion.location}</strong></p>
-                                            <p>{suggestion.category}</p>
-                                            </div>
-                                            <button
-                                                className="save-button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation(); // Ngăn việc click vào button cũng trigger điều hướng
-                                                    // TODO: xử lý lưu yêu thích nếu cần
-                                                }}
-                                            >
-                                            Save
-                                            </button>
-                                        </div>);
-                                    })
-                                    )}
+                                        Save
+                                        </button>
+                                    </div>
+                                    ))
+                                )}
                                 </div>
                             </div>
                         </div>
