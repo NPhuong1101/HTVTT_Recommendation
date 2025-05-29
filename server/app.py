@@ -442,8 +442,8 @@ def save_ground_truth():
     try:
         data = request.json
         user_id = data.get('user_id')
-        source_place_id = data.get('source_place_id')  # VD: "8|7"
-        clicked_place_id = str(data.get('clicked_place_ids'))  # VD: "86"
+        source_place_id = data.get('source_place_id')
+        clicked_place_id = str(data.get('clicked_place_ids'))
         timestamp = data.get('timestamp', datetime.now().isoformat())
 
         if not user_id or not source_place_id or not clicked_place_id:

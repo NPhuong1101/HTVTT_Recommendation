@@ -45,6 +45,35 @@ const UserProfile = () => {
     }
   };
 
+  const loadUserHistory = async (userId) => {
+    try {
+      const historyResponse = await axios.get(`/api/user-history/${userId}`);
+      const historyData = historyResponse.data.map(item => ({
+        id: item.id,
+        userId: item.userId,
+        placeId: item.placeId,
+        placeName: item.placeName,
+        category: item.category || 'Không rõ',
+        location: item.location || '',
+        placeImg: item.placeImg || '',
+        startDate: item.startDate,
+        endDate: item.endDate,
+        created_at: item.created_at
+      }));
+
+      setTravelHistory(historyData);
+
+      if (historyData.length === 0) {
+        await fetchRandomPopularPlaces();
+      } else {
+        await fetchRecommendations(historyData, userId);
+      }
+    } catch (error) {
+      console.error("Error loading travel history:", error);
+      await fetchRandomPopularPlaces();
+    }
+  };
+
   // Load dữ liệu user và lịch sử
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -55,32 +84,7 @@ const UserProfile = () => {
 
     const parsedUser = JSON.parse(storedUser);
     setUser(parsedUser);
-
-    const loadUserHistory = async () => {
-      try {
-        const historyResponse = await axios.get(`/api/user-history/${parsedUser.id}`);
-        const historyData = historyResponse.data.map(item => ({
-          id: item.id,
-          userId: item.userId,
-          placeId: item.placeId,
-          placeName: item.placeName,
-          category: item.category || 'Không rõ',
-          location: item.location || '',
-          placeImg: item.placeImg || '',
-          startDate: item.startDate,
-          endDate: item.endDate,
-          created_at: item.created_at
-        }));
-
-        setTravelHistory(historyData);
-        historyData.length === 0 ? await fetchRandomPopularPlaces() : fetchRecommendations(historyData, parsedUser.id);
-      } catch (error) {
-        console.error("Error loading travel history:", error);
-        await fetchRandomPopularPlaces();
-      }
-    };
-
-    loadUserHistory();
+    loadUserHistory(parsedUser.id);
   }, [navigate]);
 
   // Gợi ý địa điểm
@@ -116,7 +120,7 @@ const UserProfile = () => {
     const validPlaces = selectedPlaces.filter(p => p.placeId && p.startDate && p.endDate);
     if (validPlaces.length === 0) return;
 
-    // Kiểm tra trùng lặp
+    // Kiểm tra trùng lặp trong selectedPlaces
     for (let i = 0; i < validPlaces.length; i++) {
       for (let j = i + 1; j < validPlaces.length; j++) {
         if (isOverlapping(validPlaces[i].startDate, validPlaces[i].endDate, validPlaces[j].startDate, validPlaces[j].endDate)) {
@@ -126,6 +130,7 @@ const UserProfile = () => {
       }
     }
 
+    // 2. Kiểm tra trùng lặp với travelHistory đã lưu
     for (const newPlace of validPlaces) {
       for (const existing of travelHistory) {
         if (isOverlapping(newPlace.startDate, newPlace.endDate, existing.startDate, existing.endDate)) {
@@ -154,17 +159,25 @@ const UserProfile = () => {
 
         updatedHistory.push(newRecord);
         
-        await axios.post('/api/save-travel-history', {
-          userId: user.id,
-          placeId: place.placeId,
-          startDate: place.startDate,
-          endDate: place.endDate
-        });
+        // Gọi API lưu vào user_travel_history.csv
+        try {
+          await axios.post('/api/save-travel-history', {
+            userId: user.id,
+            placeId: place.placeId,
+            startDate: place.startDate,
+            endDate: place.endDate
+          });
+        } catch (err) {
+          console.error("Lỗi khi lưu travel_history:", err);
+          alert(`Lỗi khi lưu vào travel_history cho địa điểm ${place.placeName}`);
+          return;
+        }
       }
 
       setTravelHistory(updatedHistory);
       setSelectedPlaces([]);
       setActiveTab(null);
+      await loadUserHistory(user.id);
     } catch (error) {
       console.error("Lỗi khi thêm địa điểm:", error);
       alert("Đã xảy ra lỗi khi thêm địa điểm.");
