@@ -53,20 +53,20 @@ const Destination = () => {
         try {
             const userData = JSON.parse(localStorage.getItem('user'));
             if (userData?.id) {
-            const response = await axios.post('/api/save-ground-truth', {
-                user_id: userData.id,
-                place_id: id,
-                clicked_id: suggestion.id 
-            }, {
-                headers: {
-                    'Content-Type': 'application/json'
+                const response = await axios.post('/api/save-ground-truth', {
+                    user_id: userData.id,
+                    source_place_id: id,
+                    clicked_place_ids: suggestion.id 
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }); 
+                
+                if (!response.data.success) {
+                    console.error("Failed to save ground truth:", response.data.error);
+                    // Vẫn chuyển trang dù không lưu được ground truth
                 }
-            }); 
-            
-            if (!response.data.success) {
-                console.error("Failed to save ground truth:", response.data.error);
-                // Vẫn chuyển trang dù không lưu được ground truth
-            }
             }
             navigate(`/destination/${suggestion.id}`);
         } catch (error) {
@@ -141,15 +141,6 @@ const Destination = () => {
                                         <p><strong>{suggestion.location}</strong></p>
                                         <p>{suggestion.category}</p>
                                         </div>
-                                        <button
-                                        className="dest-save-button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            // TODO: xử lý lưu yêu thích
-                                        }}
-                                        >
-                                        Save
-                                        </button>
                                     </div>
                                     ))
                                 )}

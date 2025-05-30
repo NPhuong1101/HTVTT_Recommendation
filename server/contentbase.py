@@ -8,6 +8,14 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import csv
 
+vietnamese_stopwords = {"là", "của", "và", "có", "cho", "với", "các", "những", "một",
+                        "này", "đó", "được", "trong", "khi", "đã", "tại", "theo",
+                        "rằng", "nên", "thì", "ra", "vẫn", "vì", "nơi", "đến", "từ"}
+
+def remove_stopwords(text, stopwords):
+    words = text.lower().split()
+    return " ".join([word for word in words if word not in stopwords])
+
 def save_recommendations(user_id, source_place_ids, recommended_place_ids):
     """Lưu gợi ý: mỗi dòng gồm user_id, source_place_ids, recommended_place_ids"""
     try:
@@ -69,9 +77,10 @@ def main():
         # Xử lý dữ liệu
         data = data.fillna("")
         data["content"] = data["description"] + " " + data["category"] + " " + data["location"]
+        data["content"] = data["content"].apply(lambda x: remove_stopwords(x, vietnamese_stopwords))
 
         # Tạo TF-IDF matrix
-        vectorizer = TfidfVectorizer(stop_words="english")
+        vectorizer = TfidfVectorizer()
         tfidf_matrix = vectorizer.fit_transform(data["content"])
         cosine_sim = cosine_similarity(tfidf_matrix)
 
