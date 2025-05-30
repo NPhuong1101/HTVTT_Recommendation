@@ -302,33 +302,29 @@ def login():
         return jsonify({"error": str(e)}), 500
 
 # Lấy thông tin địa điểm du lịch trong UserProfile
-@app.route('/api/user-history/<user_id>', methods=['GET'])
+@app.route('/api/user-history/<user_id>', methods=['GET']) 
 def get_user_history(user_id):
     try:
-        # Đường dẫn tới file lịch sử
-        history_path = os.path.join(os.path.dirname(__file__), '../public/data/user_travel_history.csv')
-        # Đường dẫn tới file địa điểm
-        places_path = os.path.join(os.path.dirname(__file__), '../public/data/Info-trip.csv')
-
-        if not os.path.exists(history_path) or not os.path.exists(places_path):
+        # Kiểm tra file tồn tại
+        if not os.path.exists(TRAVEL_HISTORY_CSV) or not os.path.exists(INFO_TRIP_CSV):
             return jsonify([])
 
-        # Load danh sách địa điểm thành dict: place_id -> place_info
+        # Đọc dữ liệu địa điểm: map từ id -> thông tin địa điểm
         place_map = {}
-        with open(places_path, 'r', encoding='utf-8') as f_places:
+        with open(INFO_TRIP_CSV, 'r', encoding='utf-8') as f_places:
             reader = csv.DictReader(f_places)
             for row in reader:
                 place_map[row['id']] = row
 
-        # Load lịch sử người dùng
-        with open(history_path, 'r', encoding='utf-8') as f_history:
+        # Đọc lịch sử du lịch
+        history = []
+        with open(TRAVEL_HISTORY_CSV, 'r', encoding='utf-8') as f_history:
             reader = csv.DictReader(f_history)
-            history = []
             for row in reader:
                 if row.get('user_id') == user_id:
                     place_id = row.get('place_id')
                     place_info = place_map.get(place_id, {})
-                    
+
                     history.append({
                         'id': row.get('id'),
                         'user_id': user_id,
@@ -341,23 +337,20 @@ def get_user_history(user_id):
                         'location': place_info.get('Tỉnh thành', ''),
                         'category': place_info.get('Thể loại', '')
                     })
-        # DEBUG: In log để kiểm tra
-        print(">>> Số dòng lịch sử tìm được:", len(history))
 
-        # Optional: Nếu cần lọc thêm từ pandas
-        df_user = pd.read_csv(TRAVEL_HISTORY_CSV)
-        df_info = pd.read_csv(INFO_TRIP_CSV)
+        # Sắp xếp theo startDate tăng dần
+        def parse_date_safe(d):
+            try:
+                return datetime.fromisoformat(d)
+            except:
+                return datetime.min
 
-        df_user_places = df_user[df_user["user_id"] == user_id]
-        print("Các place_id user đã đi:", df_user_places["place_id"].tolist())
-
-        df_filtered_info = df_info[df_info["id"].isin(df_user_places["place_id"])]
-        print("Các địa điểm info-trip khớp:", df_filtered_info[["id", "Tên địa điểm"]].to_dict(orient='records'))
+        history.sort(key=lambda x: parse_date_safe(x.get('startDate', '')), reverse=True)
 
         return jsonify(history)
 
     except Exception as e:
-        print("Lỗi:", str(e))  # Thêm dòng này
+        print("Lỗi:", str(e))
         return jsonify({"error": str(e)}), 500
 
 # Gợi ý trong UserProfile
