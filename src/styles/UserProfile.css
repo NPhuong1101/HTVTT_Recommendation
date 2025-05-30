@@ -43,6 +43,19 @@ body {
   min-height: 100vh;
 }
 
+.left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 3500px;
+}
+
+/* Cột phải - chứa lịch sử du lịch */
+.right-column {
+  flex: 1;
+  min-width: 0; /* Quan trọng: cho phép flex item co lại */
+}
+
 .profile-info {
   display: flex;
   flex-direction: column;
@@ -51,9 +64,7 @@ body {
 }
 
 .user-profile-container {
-  max-width: 1550px;
   margin: 0 auto;
-  padding: 3rem 2rem;
   display: grid;
   gap: 2rem;
   align-items: flex-start;
@@ -314,14 +325,15 @@ body {
   background-color: var(--white);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
-  padding: 2rem;
+  padding: 3rem;
+  top: 20px;
   position: relative;
   overflow: visible; /* Thay đổi từ hidden sang visible */
   border: 1px solid rgba(0, 0, 0, 0.03);
-  margin-left: 7rem;
+  margin-left: 9rem;
   width: auto; /* Thay đổi từ 950px sang auto */
   min-width: 0; /* Quan trọng: fix lỗi grid item bị tràn */
-  max-width: calc(100% - 7rem); /* Giới hạn chiều rộng tối đa */
+  max-width: calc(100% - 10rem); /* Giới hạn chiều rộng tối đa */
 }
 
 .travel-history-section:hover {
@@ -617,7 +629,7 @@ body {
   padding: 2rem;
   width: 90%;
   max-width: 600px;
-  height: 90vh;
+  max-height: 90vh;
   overflow-y: auto;
   position: relative;
   box-shadow: 0 10px 30px rgba(0, 200, 83, 0.2);
