@@ -60,11 +60,14 @@ body {
   background: linear-gradient(135deg, var(--off-white) 0%, var(--white) 100%);
   position: relative;
   display: grid;
-  grid-template-columns: 350px 1fr;
+  grid-template-columns: 350px minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
   grid-template-areas: 
     "header sidebar"
     "history sidebar"
-    "footer sidebar";
+    "footer sidebar"; 
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .user-profile-container::before {
@@ -311,13 +314,14 @@ body {
   background-color: var(--white);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
-  padding: 2.5rem;
+  padding: 2rem;
   position: relative;
-  overflow: hidden;
+  overflow: visible; /* Thay đổi từ hidden sang visible */
   border: 1px solid rgba(0, 0, 0, 0.03);
-  transition: var(--transition);
   margin-left: 7rem;
-  width: 950px;
+  width: auto; /* Thay đổi từ 950px sang auto */
+  min-width: 0; /* Quan trọng: fix lỗi grid item bị tràn */
+  max-width: calc(100% - 7rem); /* Giới hạn chiều rộng tối đa */
 }
 
 .travel-history-section:hover {
@@ -538,13 +542,11 @@ body {
   background-color: var(--white);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
-  padding: 1.5rem;
   position: relative;
-  overflow: hidden;
   width: 470px;
+  position: sticky;
+  align-self: flex-start !important;
   border: 1px solid rgba(0, 0, 0, 0.03);
-  transition: var(--transition);
-  margin-top: 0;
 }
 
 .recommendations-section h2 {
