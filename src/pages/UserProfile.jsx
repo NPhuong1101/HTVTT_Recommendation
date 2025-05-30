@@ -337,7 +337,7 @@ const UserProfile = () => {
     <>
       <Navbar />
       <div className="user-profile-container">
-        <div className="left-column">
+        <div className="left-col">
           <div className="profile-header">
             <div className="profile-info">
               <img src={user.avatar} alt="User Avatar" className="profile-avatar" />
@@ -538,7 +538,7 @@ const UserProfile = () => {
         </div>
 
         {/* Lịch sử du lịch */}
-        <div className="right-column">
+        <div className="right-col">
           <div className="travel-history-section">
             <h2>Lịch sử du lịch</h2>
             
