@@ -102,9 +102,11 @@ def main():
         total_sim = sum(cosine_sim[i] for i in input_indices)
         total_sim[input_indices] = 0  # Loại bỏ các địa điểm đầu vào
 
+        # Sắp xếp các địa điểm theo độ tương đồng giảm dần
         sim_scores = list(enumerate(total_sim))
         sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[:5]
 
+        # Trả về top 5 địa điểm có điểm số cao nhất làm gợi ý
         recommended = data.iloc[[i[0] for i in sim_scores]]
         result = recommended[["id", "title", "description", "category", "location", "image", "map_link"]].to_dict(orient="records")
 
