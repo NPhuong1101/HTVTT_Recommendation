@@ -116,7 +116,6 @@ const UserProfile = () => {
     const validPlaces = selectedPlaces.filter(p => p.placeId && p.startDate && p.endDate);
     if (validPlaces.length === 0) return;
 
-    // Kiểm tra trùng lặp
     for (let i = 0; i < validPlaces.length; i++) {
       for (let j = i + 1; j < validPlaces.length; j++) {
         if (isOverlapping(validPlaces[i].startDate, validPlaces[i].endDate, validPlaces[j].startDate, validPlaces[j].endDate)) {
@@ -136,36 +135,38 @@ const UserProfile = () => {
     }
 
     try {
-      const updatedHistory = [...travelHistory];
-      
-      for (const place of validPlaces) {
-        const newRecord = {
-          id: Date.now().toString() + Math.random(),
-          userId: user.id,
-          placeId: place.placeId,
-          placeName: place.placeName,
-          category: place.category || '',
-          location: place.location || '',
-          startDate: place.startDate,
-          endDate: place.endDate,
-          created_at: new Date().toISOString(),
-          placeImg: ''
-        };
-
-        updatedHistory.push(newRecord);
-        
+      // Lưu từng địa điểm
+      await Promise.all(validPlaces.map(async (place) => {
         await axios.post('/api/save-travel-history', {
           userId: user.id,
           placeId: place.placeId,
           startDate: place.startDate,
           endDate: place.endDate
         });
+      }));
+
+      // Sau khi lưu thành công, load lại lịch sử và gợi ý
+      const historyResponse = await axios.get(`/api/user-history/${user.id}`);
+      const historyData = historyResponse.data.map(item => ({
+        id: item.id,
+        userId: item.userId,
+        placeId: item.placeId,
+        placeName: item.placeName,
+        category: item.category || 'Không rõ',
+        location: item.location || '',
+        placeImg: item.placeImg || '',
+        startDate: item.startDate,
+        endDate: item.endDate,
+        created_at: item.created_at
+      }));
+      setTravelHistory(historyData);
+
+      if (historyData.length > 0) {
+        await fetchRecommendations(historyData, user.id);
       }
 
-      setTravelHistory(updatedHistory);
       setSelectedPlaces([]);
       setActiveTab(null);
-      await loadUserHistory(user.id);
     } catch (error) {
       console.error("Lỗi khi thêm địa điểm:", error);
       alert("Đã xảy ra lỗi khi thêm địa điểm.");
@@ -184,6 +185,16 @@ const UserProfile = () => {
       } else {
         alert(data.error || "Xóa thất bại!");
       }
+      
+      // Sau khi xóa, load lại gợi ý
+      const updated = travelHistory.filter(item => item.id !== id);
+      setTravelHistory(updated);
+      if (updated.length > 0) {
+        await fetchRecommendations(updated, user.id);
+      } else {
+        await fetchRandomPopularPlaces();
+      }
+
     } catch (err) {
       console.error("Lỗi khi xóa:", err);
       alert("Lỗi kết nối khi xóa!");
