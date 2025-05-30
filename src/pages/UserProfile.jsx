@@ -28,15 +28,15 @@ const UserProfile = () => {
       const e1 = new Date(end1);
       const s2 = new Date(start2);
       const e2 = new Date(end2);
-      
-      if (isNaN(s1.getTime())) throw new Error(`Ngày bắt đầu "${start1}" không hợp lệ`);
-      if (isNaN(e1.getTime())) throw new Error(`Ngày kết thúc "${end1}" không hợp lệ`);
-      if (isNaN(s2.getTime())) throw new Error(`Ngày bắt đầu "${start2}" không hợp lệ`);
-      if (isNaN(e2.getTime())) throw new Error(`Ngày kết thúc "${end2}" không hợp lệ`);
-      
+
+      // Kiểm tra ngày không hợp lệ
+      if (isNaN(s1.getTime()) || isNaN(e1.getTime()) || isNaN(s2.getTime()) || isNaN(e2.getTime())) {
+        throw new Error(`Ngày không hợp lệ: ${start1}, ${end1}, ${start2}, ${end2}`);
+      }
+
       if (e1 < s1) throw new Error(`Ngày kết thúc phải sau ngày bắt đầu (${start1} - ${end1})`);
       if (e2 < s2) throw new Error(`Ngày kết thúc phải sau ngày bắt đầu (${start2} - ${end2})`);
-      
+
       return s1 <= e2 && s2 <= e1;
     } catch (error) {
       console.error("Lỗi kiểm tra trùng lặp:", error);
